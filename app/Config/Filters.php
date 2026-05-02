@@ -25,6 +25,8 @@ class Filters extends BaseFilters
      * or [filter_name => [classname1, classname2, ...]]
      */
     public array $aliases = [
+        'auth'          => \App\Filters\AuthFilter::class,
+        'guest'         => \App\Filters\GuestFilter::class,
         'csrf'          => CSRF::class,
         'toolbar'       => DebugToolbar::class,
         'honeypot'      => Honeypot::class,
@@ -95,7 +97,9 @@ class Filters extends BaseFilters
      *
      * @var array<string, list<string>>
      */
-    public array $methods = [];
+    public array $methods = [
+        'POST' => ['csrf'],
+    ];
 
     /**
      * List of filter aliases that should run on any

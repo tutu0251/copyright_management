@@ -10,6 +10,18 @@ $routes->get('/', static function () {
     return redirect()->to(site_url('mockup'));
 });
 
+$routes->group('main', ['namespace' => 'App\Controllers\Main'], static function ($routes) {
+    $routes->group('', ['filter' => 'guest'], static function ($routes) {
+        $routes->get('login', 'Auth::login');
+        $routes->post('login', 'Auth::login');
+    });
+    $routes->get('logout', 'Auth::logout', ['filter' => 'auth']);
+    $routes->group('', ['filter' => 'auth'], static function ($routes) {
+        $routes->get('/', 'Dashboard::index');
+        $routes->get('dashboard', 'Dashboard::index');
+    });
+});
+
 $routes->group('mockup', static function ($routes) {
     $routes->get('/', 'Mockup::dashboard');
     $routes->get('works', 'Mockup::worksRedirect');
