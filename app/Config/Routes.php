@@ -54,6 +54,18 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
     $routes->get('licenses/(:num)/edit', 'Licenses::edit/$1');
     $routes->post('licenses/(:num)/update', 'Licenses::update/$1');
     $routes->post('licenses/(:num)/delete', 'Licenses::delete/$1');
+
+    $routes->get('usage-reports/(:num)/evidence', 'UsageReports::evidence/$1');
+    $routes->get('usage-reports', 'UsageReports::index');
+    $routes->get('usage-reports/create', 'UsageReports::create');
+    $routes->post('usage-reports', 'UsageReports::store');
+    $routes->get('usage-reports/(:num)/edit', 'UsageReports::edit/$1');
+    $routes->get('usage-reports/(:num)', 'UsageReports::show/$1');
+    $routes->post('usage-reports/(:num)/update', 'UsageReports::update/$1');
+    $routes->post('usage-reports/(:num)/delete', 'UsageReports::delete/$1');
+    $routes->post('usage-reports/(:num)/mark-authorized', 'UsageReports::markAuthorized/$1');
+    $routes->post('usage-reports/(:num)/mark-infringement', 'UsageReports::markInfringement/$1');
+    $routes->post('usage-reports/(:num)/escalate-case', 'UsageReports::escalateCase/$1');
 });
 
 $routes->group('mockup', static function ($routes) {

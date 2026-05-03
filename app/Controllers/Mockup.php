@@ -199,8 +199,8 @@ class Mockup extends BaseController
 
         $licenseIds = array_column($licRows, 'id');
         $workUsageRows = [];
-        if ($licenseIds !== []) {
-            $usageDbRows = $db->table('usage_reports')
+        if ($licenseIds !== [] && $db->tableExists('license_usage_snapshots')) {
+            $usageDbRows = $db->table('license_usage_snapshots')
                 ->whereIn('license_id', $licenseIds)
                 ->orderBy('period_start', 'DESC')
                 ->get()

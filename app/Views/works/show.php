@@ -2,7 +2,8 @@
 /** @var array<string, mixed> $work */
 $wid = (string) ($work['work_id'] ?? $work['id'] ?? '');
 $workLicenses = $workLicenses ?? [];
-$workUsageRows = $workUsageRows ?? [];
+$licenseUsageSnapshots = $licenseUsageSnapshots ?? [];
+$usageMonitoringRows = $usageMonitoringRows ?? [];
 $ownershipRows = $ownershipRows ?? [];
 $files = $files ?? [];
 $flashMessage = $flashMessage ?? null;
@@ -254,10 +255,49 @@ $flashWarning = $flashWarning ?? null;
 
     <div class="ui-tabs__panel" data-tab-panel="usage" role="tabpanel">
         <div class="card">
-            <h2 class="card__title">Usage snapshots</h2>
-            <?php if ($workUsageRows === []) : ?>
-                <p class="muted">No usage rows for licenses tied to this work.</p>
+            <h2 class="card__title">Usage monitoring</h2>
+            <p class="muted" style="margin-top: 0;">Detections filed for this work (manual monitoring).</p>
+            <?php if ($usageMonitoringRows === []) : ?>
+                <p class="muted">No usage reports for this work yet.</p>
             <?php else : ?>
+                <?= $this->include('components/table') ?>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Source</th>
+                            <th>Usage</th>
+                            <th>Detected</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($usageMonitoringRows as $r) : ?>
+                            <?php $urId = (int) ($r['id'] ?? 0); ?>
+                            <tr>
+                                <td><?= esc($r['source']) ?></td>
+                                <td><?= view('components/badges', ['label' => (string) ($r['usage_type_label'] ?? ''), 'tone' => (string) ($r['usage_tone'] ?? 'neutral')]) ?></td>
+                                <td><?= esc($r['detected_at']) ?></td>
+                                <td class="table-actions">
+                                    <?php if ($urId > 0) : ?>
+                                        <a class="btn btn--ghost btn--sm" href="<?= site_url('usage-reports/' . $urId) ?>">View</a>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+                <?= $this->include('components/table_end') ?>
+            <?php endif; ?>
+            <div style="margin-top: 0.75rem;">
+                <a class="btn btn--primary btn--sm" href="<?= site_url('usage-reports/create?work_id=' . $wid) ?>">Report usage</a>
+                <a class="btn btn--secondary btn--sm" href="<?= site_url('usage-reports') ?>">All usage reports</a>
+            </div>
+        </div>
+
+        <?php if ($licenseUsageSnapshots !== []) : ?>
+            <div class="card" style="margin-top: 1rem;">
+                <h2 class="card__title">License usage snapshots</h2>
+                <p class="muted" style="margin-top: 0;">Self-reported licensee periods (legacy license reporting table).</p>
                 <?= $this->include('components/table') ?>
                 <table class="data-table">
                     <thead>
@@ -269,7 +309,7 @@ $flashWarning = $flashWarning ?? null;
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($workUsageRows as $r) : ?>
+                        <?php foreach ($licenseUsageSnapshots as $r) : ?>
                             <tr>
                                 <td><?= esc($r['period']) ?></td>
                                 <td><?= esc($r['channel']) ?></td>
@@ -280,10 +320,7 @@ $flashWarning = $flashWarning ?? null;
                     </tbody>
                 </table>
                 <?= $this->include('components/table_end') ?>
-            <?php endif; ?>
-            <div style="margin-top: 0.75rem;">
-                <a class="btn btn--secondary btn--sm" href="<?= site_url('mockup/usage-reports') ?>">Usage reports (mock)</a>
             </div>
-        </div>
+        <?php endif; ?>
     </div>
 </div>

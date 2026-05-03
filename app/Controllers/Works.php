@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Models\LicenseModel;
+use App\Models\UsageReportModel;
 use App\Models\WorkFileModel;
 use App\Models\WorkModel;
 use App\Models\WorkOwnerModel;
@@ -44,7 +45,7 @@ class Works extends BaseController
                 ['id' => 'owners', 'label' => 'Owners', 'path' => 'owners'],
                 ['id' => 'licensees', 'label' => 'Licensees', 'path' => 'licensees'],
                 ['id' => 'licenses', 'label' => 'Licenses', 'path' => 'licenses'],
-                ['id' => 'monitoring', 'label' => 'Monitoring', 'path' => 'mockup/monitoring'],
+                ['id' => 'usage_reports', 'label' => 'Usage reports', 'path' => 'usage-reports'],
                 ['id' => 'cases', 'label' => 'Cases', 'path' => 'mockup/cases'],
                 ['id' => 'reports', 'label' => 'Reports', 'path' => 'mockup/reports'],
                 ['id' => 'settings', 'label' => 'Settings', 'path' => 'mockup/settings'],
@@ -161,13 +162,28 @@ class Works extends BaseController
 
         $related = $this->loadRelatedRegistryData($workId);
 
+        $monitoringDb = model(UsageReportModel::class)->forWork($workId);
+        $usageMonitoringRows = [];
+        foreach ($monitoringDb as $ur) {
+            $urId = (int) ($ur['id'] ?? 0);
+            $slug = (string) ($ur['usage_type'] ?? '');
+            $usageMonitoringRows[] = [
+                'id'               => (string) $urId,
+                'source'           => (string) ($ur['detected_source'] ?? ''),
+                'usage_type_label' => UsageReportModel::usageTypeLabel($slug),
+                'usage_tone'       => UsageReportModel::usageTypeBadgeTone($slug),
+                'detected_at'      => (string) ($ur['detected_at'] ?? ''),
+            ];
+        }
+
         return $this->layout('works/show', [
-            'pageTitle'     => $work['title'],
-            'work'          => $work,
-            'files'         => $files,
-            'workLicenses'  => $related['workLicenses'],
-            'workUsageRows' => $related['workUsageRows'],
-            'ownershipRows' => $related['ownershipRows'],
+            'pageTitle'             => $work['title'],
+            'work'                  => $work,
+            'files'                 => $files,
+            'workLicenses'          => $related['workLicenses'],
+            'licenseUsageSnapshots' => $related['licenseUsageSnapshots'],
+            'usageMonitoringRows'   => $usageMonitoringRows,
+            'ownershipRows'         => $related['ownershipRows'],
             'flashMessage'  => session()->getFlashdata('message'),
             'flashWarning'  => session()->getFlashdata('warning'),
         ]);
@@ -396,7 +412,7 @@ class Works extends BaseController
     }
 
     /**
-     * @return array{workLicenses: list<array<string, string>>, workUsageRows: list<array<string, string>>, ownershipRows: list<array<string, string>>}
+     * @return array{workLicenses: list<array<string, string>>, licenseUsageSnapshots: list<array<string, string>>, ownershipRows: list<array<string, string>>}
      */
     private function loadRelatedRegistryData(int $workId): array
     {
@@ -442,16 +458,16 @@ class Works extends BaseController
         }
 
         $licenseIds = array_column($licRows, 'id');
-        $workUsageRows = [];
-        if ($licenseIds !== []) {
-            $usageDbRows = $db->table('usage_reports')
+        $licenseUsageSnapshots = [];
+        if ($licenseIds !== [] && $db->tableExists('license_usage_snapshots')) {
+            $usageDbRows = $db->table('license_usage_snapshots')
                 ->whereIn('license_id', $licenseIds)
                 ->orderBy('period_start', 'DESC')
                 ->get()
                 ->getResultArray();
             foreach ($usageDbRows as $u) {
                 $rev = $u['revenue_amount'] ?? null;
-                $workUsageRows[] = [
+                $licenseUsageSnapshots[] = [
                     'period'       => ($u['period_start'] ?? '') . ' – ' . ($u['period_end'] ?? ''),
                     'channel'      => '—',
                     'impressions'  => $u['usage_units'] !== null ? (string) $u['usage_units'] : '—',
@@ -461,9 +477,9 @@ class Works extends BaseController
         }
 
         return [
-            'workLicenses'  => $workLicenses,
-            'workUsageRows' => $workUsageRows,
-            'ownershipRows' => $ownershipRows,
+            'workLicenses'          => $workLicenses,
+            'licenseUsageSnapshots' => $licenseUsageSnapshots,
+            'ownershipRows'         => $ownershipRows,
         ];
     }
 }

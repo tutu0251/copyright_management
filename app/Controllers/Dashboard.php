@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Config\CopyrightMockData;
 use App\Models\LicenseModel;
+use App\Models\UsageReportModel;
 use App\Models\WorkModel;
 
 class Dashboard extends BaseController
@@ -29,7 +30,7 @@ class Dashboard extends BaseController
                 ['id' => 'owners', 'label' => 'Owners', 'path' => 'owners'],
                 ['id' => 'licensees', 'label' => 'Licensees', 'path' => 'licensees'],
                 ['id' => 'licenses', 'label' => 'Licenses', 'path' => 'licenses'],
-                ['id' => 'monitoring', 'label' => 'Monitoring', 'path' => 'mockup/monitoring'],
+                ['id' => 'usage_reports', 'label' => 'Usage reports', 'path' => 'usage-reports'],
                 ['id' => 'cases', 'label' => 'Cases', 'path' => 'mockup/cases'],
                 ['id' => 'reports', 'label' => 'Reports', 'path' => 'mockup/reports'],
                 ['id' => 'settings', 'label' => 'Settings', 'path' => 'mockup/settings'],
@@ -90,7 +91,33 @@ class Dashboard extends BaseController
             ->whereNotIn('status', ['closed', 'resolved'])
             ->countAllResults();
 
-        $usageReportsCount = $db->table('usage_reports')->countAllResults();
+        $usageTotal          = 0;
+        $usageSuspected      = 0;
+        $usageInfringement   = 0;
+        $recentUsageDetections = [];
+        if ($db->tableExists('usage_reports') && $db->fieldExists('work_id', 'usage_reports')) {
+            $usageTotal = (int) $db->table('usage_reports')->where('deleted_at', null)->countAllResults();
+            $usageSuspected = (int) $db->table('usage_reports')
+                ->where('deleted_at', null)
+                ->where('usage_type', UsageReportModel::USAGE_SUSPECTED)
+                ->countAllResults();
+            $usageInfringement = (int) $db->table('usage_reports')
+                ->where('deleted_at', null)
+                ->where('usage_type', UsageReportModel::USAGE_INFRINGEMENT)
+                ->countAllResults();
+            $rawRecent = model(UsageReportModel::class)->listRecentDetections(7, 12);
+            foreach ($rawRecent as $rr) {
+                $slug = (string) ($rr['usage_type'] ?? '');
+                $recentUsageDetections[] = [
+                    'id'           => (int) ($rr['id'] ?? 0),
+                    'work_title'   => (string) ($rr['work_title'] ?? '—'),
+                    'source'       => (string) ($rr['detected_source'] ?? ''),
+                    'detected_at'  => (string) ($rr['detected_at'] ?? ''),
+                    'usage_label'  => UsageReportModel::usageTypeLabel($slug),
+                    'usage_tone'   => UsageReportModel::usageTypeBadgeTone($slug),
+                ];
+            }
+        }
 
         $worksCount = (int) $workModel->countAllResults();
 
@@ -224,20 +251,36 @@ class Dashboard extends BaseController
                 'kpi'   => 'cases',
             ],
             [
-                'label' => 'Usage reports filed',
-                'value' => (string) $usageReportsCount,
-                'hint'  => 'Report rows on record',
-                'kpi'   => 'usage',
+                'label' => 'Usage reports (total)',
+                'value' => (string) $usageTotal,
+                'hint'  => 'Work-level detections on file',
+                'kpi'   => 'usage_total',
+                'kpi_href' => site_url('usage-reports'),
+            ],
+            [
+                'label' => 'Suspected usage',
+                'value' => (string) $usageSuspected,
+                'hint'  => 'Reports flagged as suspected',
+                'kpi'   => 'usage_suspected',
+                'kpi_href' => site_url('usage-reports?usage_type=suspected'),
+            ],
+            [
+                'label' => 'Infringement usage',
+                'value' => (string) $usageInfringement,
+                'hint'  => 'Reports flagged as infringement',
+                'kpi'   => 'usage_infringement',
+                'kpi_href' => site_url('usage-reports?usage_type=infringement'),
             ],
         ];
 
         return $this->layout('dashboard/index', [
-            'pageTitle'     => 'Dashboard',
-            'stats'         => $stats,
-            'useCharts'     => true,
-            'chartPayload'  => $chartPayload,
-            'activity'      => CopyrightMockData::recentActivity(),
-            'pinnedWorks'   => $pinnedWorks,
+            'pageTitle'             => 'Dashboard',
+            'stats'                 => $stats,
+            'useCharts'             => true,
+            'chartPayload'          => $chartPayload,
+            'activity'              => CopyrightMockData::recentActivity(),
+            'pinnedWorks'           => $pinnedWorks,
+            'recentUsageDetections' => $recentUsageDetections,
         ]);
     }
 }
