@@ -17,6 +17,15 @@ $routes->group('', ['filter' => 'guest'], static function ($routes) {
 
 $routes->group('', ['filter' => 'auth'], static function ($routes) {
     $routes->get('dashboard', 'Dashboard::index', ['filter' => 'permission:dashboard.view']);
+
+    $routes->get('reports', 'Reports::index', ['filter' => 'permission:reports.view']);
+    $routes->get('reports/works', 'Reports::works', ['filter' => 'permission:reports.view']);
+    $routes->get('reports/licenses', 'Reports::licenses', ['filter' => 'permission:reports.view']);
+    $routes->get('reports/usage', 'Reports::usage', ['filter' => 'permission:reports.view']);
+    $routes->get('reports/cases', 'Reports::cases', ['filter' => 'permission:reports.view']);
+    $routes->get('reports/activity', 'Reports::activity', ['filter' => 'permission:reports.view']);
+    $routes->get('reports/export/csv', 'Reports::exportCsv', ['filter' => 'permission:reports.view']);
+    $routes->get('reports/export/pdf', 'Reports::exportPdf', ['filter' => 'permission:reports.view']);
     $routes->get('activities', 'Activities::index', ['filter' => 'permission:activities.view']);
     $routes->post('logout', 'Auth::logout');
 

@@ -21,7 +21,7 @@ if (! function_exists('copyright_nav_items')) {
             ['id' => 'usage_reports', 'label' => 'Usage reports', 'path' => 'usage-reports', 'perm' => 'usage_reports.view'],
             ['id' => 'cases', 'label' => 'Cases', 'path' => 'cases', 'perm' => 'cases.view'],
             ['id' => 'activities', 'label' => 'Activity', 'path' => 'activities', 'perm' => 'activities.view'],
-            ['id' => 'reports', 'label' => 'Reports', 'path' => 'mockup/reports', 'perm' => null],
+            ['id' => 'reports', 'label' => 'Reports', 'path' => 'reports', 'perm' => 'reports.view'],
             ['id' => 'settings_roles', 'label' => 'Roles & permissions', 'path' => 'settings/roles', 'perm' => 'settings.manage'],
         ];
 

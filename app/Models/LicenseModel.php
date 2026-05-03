@@ -382,4 +382,185 @@ class LicenseModel extends Model
 
         return $out;
     }
+
+    /**
+     * Snapshot counts: active (in force), expired (past end), expiring within 30 days.
+     * Optional work type via joined works; optional stored license_status filter.
+     *
+     * @return array{active: int, expired: int, expiring_30: int}
+     */
+    public function reportStatusSnapshot(?string $workType = null, ?string $licenseStatus = null): array
+    {
+        $lic = $this->db->prefixTable('licenses');
+        $wt  = $this->db->prefixTable('works');
+
+        $workJoin = '';
+        $bind      = [];
+        if ($workType !== null && $workType !== '') {
+            $workJoin = " INNER JOIN `{$wt}` w ON w.id = lic.work_id AND w.deleted_at IS NULL AND w.work_type = ? ";
+            $bind[]   = $workType;
+        }
+
+        $statusClause = '';
+        if ($licenseStatus !== null && $licenseStatus !== '' && in_array($licenseStatus, self::LICENSE_STATUSES, true)) {
+            $statusClause = ' AND lic.license_status = ? ';
+            $bind[]       = $licenseStatus;
+        }
+
+        $sqlActive = "SELECT COUNT(*) AS c FROM `{$lic}` lic
+            {$workJoin}
+            WHERE lic.deleted_at IS NULL
+            AND lic.license_status NOT IN ('draft','cancelled')
+            {$statusClause}
+            AND (lic.end_date IS NULL OR lic.end_date >= CURDATE())";
+
+        $sqlExpired = "SELECT COUNT(*) AS c FROM `{$lic}` lic
+            {$workJoin}
+            WHERE lic.deleted_at IS NULL
+            AND lic.license_status NOT IN ('draft','cancelled')
+            {$statusClause}
+            AND lic.end_date IS NOT NULL AND lic.end_date < CURDATE()";
+
+        $sqlExp30 = "SELECT COUNT(*) AS c FROM `{$lic}` lic
+            {$workJoin}
+            WHERE lic.deleted_at IS NULL
+            AND lic.end_date IS NOT NULL
+            AND lic.end_date >= CURDATE()
+            AND lic.end_date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)
+            AND lic.license_status NOT IN ('draft','cancelled')
+            {$statusClause}";
+
+        return [
+            'active'       => (int) ($this->db->query($sqlActive, $bind)->getRowArray()['c'] ?? 0),
+            'expired'      => (int) ($this->db->query($sqlExpired, $bind)->getRowArray()['c'] ?? 0),
+            'expiring_30'  => (int) ($this->db->query($sqlExp30, $bind)->getRowArray()['c'] ?? 0),
+        ];
+    }
+
+    /**
+     * Sum paid fees and unpaid+partial fee totals (portfolio), optional work type.
+     *
+     * @return array{paid_sum: float, unpaid_sum: float}
+     */
+    public function revenueSnapshot(?string $workType = null, ?string $licenseStatus = null): array
+    {
+        $lic = $this->db->prefixTable('licenses');
+        $wt  = $this->db->prefixTable('works');
+
+        $join = "FROM `{$lic}` lic";
+        $bind = [];
+        if ($workType !== null && $workType !== '') {
+            $join .= " INNER JOIN `{$wt}` w ON w.id = lic.work_id AND w.deleted_at IS NULL AND w.work_type = ? ";
+            $bind[] = $workType;
+        } else {
+            $join .= " LEFT JOIN `{$wt}` w ON w.id = lic.work_id AND w.deleted_at IS NULL ";
+        }
+
+        $statusClause = '';
+        if ($licenseStatus !== null && $licenseStatus !== '' && in_array($licenseStatus, self::LICENSE_STATUSES, true)) {
+            $statusClause = ' AND lic.license_status = ? ';
+            $bind[]       = $licenseStatus;
+        }
+
+        $sqlPaid = "SELECT COALESCE(SUM(lic.fee_amount), 0) AS s {$join}
+            WHERE lic.deleted_at IS NULL AND lic.payment_status = ? {$statusClause}";
+        $bindPaid = array_merge($bind, [self::PAYMENT_PAID]);
+
+        $sqlUnpaid = "SELECT COALESCE(SUM(lic.fee_amount), 0) AS s {$join}
+            WHERE lic.deleted_at IS NULL AND lic.payment_status IN (?, ?) {$statusClause}";
+        $bindUnpaid = array_merge($bind, [self::PAYMENT_UNPAID, self::PAYMENT_PARTIAL]);
+
+        return [
+            'paid_sum'   => (float) ($this->db->query($sqlPaid, $bindPaid)->getRowArray()['s'] ?? 0),
+            'unpaid_sum' => (float) ($this->db->query($sqlUnpaid, $bindUnpaid)->getRowArray()['s'] ?? 0),
+        ];
+    }
+
+    /**
+     * Payment status counts for non-deleted licenses (optional work type / license status).
+     *
+     * @return array<string, int> slug => count
+     */
+    public function countsByPaymentStatus(?string $workType = null, ?string $licenseStatus = null): array
+    {
+        $wt = $this->db->prefixTable('works');
+
+        $b = $this->builder()
+            ->select('licenses.payment_status AS ps', false)
+            ->select('COUNT(*) AS c', false)
+            ->where('licenses.deleted_at', null);
+
+        if ($workType !== null && $workType !== '') {
+            $b->join("{$wt} w", 'w.id = licenses.work_id AND w.deleted_at IS NULL', 'inner')
+                ->where('w.work_type', $workType);
+        }
+
+        if ($licenseStatus !== null && $licenseStatus !== '' && in_array($licenseStatus, self::LICENSE_STATUSES, true)) {
+            $b->where('licenses.license_status', $licenseStatus);
+        }
+
+        $rows = $b->groupBy('licenses.payment_status')->get()->getResultArray();
+
+        $out = [];
+        foreach (self::PAYMENT_STATUSES as $p) {
+            $out[$p] = 0;
+        }
+        foreach ($rows as $r) {
+            $p = (string) ($r['ps'] ?? '');
+            if ($p !== '') {
+                $out[$p] = (int) ($r['c'] ?? 0);
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Licenses created in date window (by lic.created_at).
+     *
+     * @return list<array{d: string, c: int}>
+     */
+    public function countCreatedByDayBetween(string $startDate, string $endDate, ?string $workType = null, ?string $licenseStatus = null): array
+    {
+        $startTs = strtotime($startDate . ' 00:00:00');
+        $endTs   = strtotime($endDate . ' 23:59:59');
+        if ($startTs === false || $endTs === false || $startTs > $endTs) {
+            return [];
+        }
+
+        $wt = $this->db->prefixTable('works');
+
+        $b = $this->builder()
+            ->select('DATE(licenses.created_at) AS d', false)
+            ->select('COUNT(*) AS c', false)
+            ->where('licenses.deleted_at', null)
+            ->where('DATE(licenses.created_at) >=', date('Y-m-d', $startTs))
+            ->where('DATE(licenses.created_at) <=', date('Y-m-d', $endTs));
+
+        if ($workType !== null && $workType !== '') {
+            $b->join("{$wt} w", 'w.id = licenses.work_id AND w.deleted_at IS NULL', 'inner')
+                ->where('w.work_type', $workType);
+        }
+
+        if ($licenseStatus !== null && $licenseStatus !== '' && in_array($licenseStatus, self::LICENSE_STATUSES, true)) {
+            $b->where('licenses.license_status', $licenseStatus);
+        }
+
+        $rows = $b->groupBy('DATE(licenses.created_at)', false)->orderBy('d', 'ASC')->get()->getResultArray();
+        $map  = [];
+        foreach ($rows as $r) {
+            $d = (string) ($r['d'] ?? '');
+            if ($d !== '') {
+                $map[$d] = (int) ($r['c'] ?? 0);
+            }
+        }
+
+        $out = [];
+        for ($t = $startTs; $t <= $endTs; $t += 86400) {
+            $day = date('Y-m-d', $t);
+            $out[] = ['d' => $day, 'c' => $map[$day] ?? 0];
+        }
+
+        return $out;
+    }
 }

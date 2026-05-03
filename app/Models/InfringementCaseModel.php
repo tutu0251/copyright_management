@@ -395,4 +395,168 @@ class InfringementCaseModel extends Model
 
         return $map;
     }
+
+    /**
+     * Count cases with optional case_status filter and optional created_at window.
+     */
+    public function countFiltered(?string $caseStatus = null, ?string $createdStart = null, ?string $createdEnd = null): int
+    {
+        if (! self::schemaReady()) {
+            return 0;
+        }
+
+        $b = $this->builder();
+        if ($caseStatus !== null && $caseStatus !== '' && in_array($caseStatus, self::ALL_STATUSES, true)) {
+            $b->where('case_status', $caseStatus);
+        }
+        if ($createdStart !== null && $createdStart !== '') {
+            $b->where('created_at >=', $createdStart);
+        }
+        if ($createdEnd !== null && $createdEnd !== '') {
+            $b->where('created_at <=', strlen((string) $createdEnd) === 10 ? $createdEnd . ' 23:59:59' : $createdEnd);
+        }
+
+        return (int) $b->countAllResults();
+    }
+
+    /**
+     * Open vs resolved counts. When case_status filter is set, counts rows in that status only
+     * (pie shows one slice vs zero for the other category).
+     *
+     * @return array{open: int, resolved: int}
+     */
+    public function countOpenVsResolvedSnapshot(?string $caseStatus = null): array
+    {
+        if (! self::schemaReady()) {
+            return ['open' => 0, 'resolved' => 0];
+        }
+
+        if ($caseStatus !== null && $caseStatus !== '' && in_array($caseStatus, self::ALL_STATUSES, true)) {
+            $c = (int) $this->builder()->where('case_status', $caseStatus)->countAllResults();
+            if (self::isOpenStatus($caseStatus)) {
+                return ['open' => $c, 'resolved' => 0];
+            }
+            if ($caseStatus === self::STATUS_RESOLVED) {
+                return ['open' => 0, 'resolved' => $c];
+            }
+
+            return ['open' => 0, 'resolved' => 0];
+        }
+
+        $open = (int) $this->builder()
+            ->whereNotIn('case_status', [self::STATUS_RESOLVED, self::STATUS_REJECTED])
+            ->countAllResults();
+        $resolved = (int) $this->builder()
+            ->where('case_status', self::STATUS_RESOLVED)
+            ->countAllResults();
+
+        return ['open' => $open, 'resolved' => $resolved];
+    }
+
+    /**
+     * @return array<string, int> priority slug => count
+     */
+    public function countsByPriority(?string $caseStatus = null): array
+    {
+        if (! self::schemaReady()) {
+            return [];
+        }
+
+        $b = $this->builder()->select('priority AS p', false)->select('COUNT(*) AS c', false);
+        if ($caseStatus !== null && $caseStatus !== '' && in_array($caseStatus, self::ALL_STATUSES, true)) {
+            $b->where('case_status', $caseStatus);
+        }
+        $rows = $b->groupBy('priority')->get()->getResultArray();
+
+        $out = [];
+        foreach (self::PRIORITIES as $p) {
+            $out[$p] = 0;
+        }
+        foreach ($rows as $r) {
+            $p = (string) ($r['p'] ?? '');
+            if ($p !== '') {
+                $out[$p] = (int) ($r['c'] ?? 0);
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Average days from opened_at (or created_at) to closed_at for resolved cases in window.
+     */
+    public function averageResolutionDaysBetween(?string $resolvedStart, ?string $resolvedEnd): ?float
+    {
+        if (! self::schemaReady()) {
+            return null;
+        }
+
+        $ic = $this->db->prefixTable('infringement_cases');
+
+        $sql = "SELECT AVG(DATEDIFF(COALESCE(ic.closed_at, ic.updated_at), COALESCE(ic.opened_at, ic.created_at))) AS avg_days
+            FROM `{$ic}` ic
+            WHERE ic.case_status = ?
+            AND COALESCE(ic.closed_at, ic.updated_at) IS NOT NULL
+            AND COALESCE(ic.opened_at, ic.created_at) IS NOT NULL";
+
+        $bind = [self::STATUS_RESOLVED];
+        if ($resolvedStart !== null && $resolvedStart !== '') {
+            $sql .= ' AND COALESCE(ic.closed_at, ic.updated_at) >= ?';
+            $bind[] = $resolvedStart;
+        }
+        if ($resolvedEnd !== null && $resolvedEnd !== '') {
+            $sql .= ' AND COALESCE(ic.closed_at, ic.updated_at) <= ?';
+            $bind[] = strlen((string) $resolvedEnd) === 10 ? $resolvedEnd . ' 23:59:59' : $resolvedEnd;
+        }
+
+        $row = $this->db->query($sql, $bind)->getRowArray();
+        $v   = $row['avg_days'] ?? null;
+
+        return $v === null ? null : round((float) $v, 1);
+    }
+
+    /**
+     * Cases opened per day in range (COALESCE(opened_at, created_at)).
+     *
+     * @return list<array{d: string, c: int}>
+     */
+    public function countOpenedByDayBetween(string $startDate, string $endDate): array
+    {
+        if (! self::schemaReady()) {
+            return [];
+        }
+
+        $startTs = strtotime($startDate . ' 00:00:00');
+        $endTs   = strtotime($endDate . ' 23:59:59');
+        if ($startTs === false || $endTs === false || $startTs > $endTs) {
+            return [];
+        }
+
+        $ic = $this->db->prefixTable('infringement_cases');
+
+        $rows = $this->db->query(
+            "SELECT DATE(COALESCE(ic.opened_at, ic.created_at)) AS d, COUNT(*) AS c
+            FROM `{$ic}` ic
+            WHERE DATE(COALESCE(ic.opened_at, ic.created_at)) >= ?
+            AND DATE(COALESCE(ic.opened_at, ic.created_at)) <= ?
+            GROUP BY d ORDER BY d ASC",
+            [date('Y-m-d', $startTs), date('Y-m-d', $endTs)],
+        )->getResultArray();
+
+        $map = [];
+        foreach ($rows as $r) {
+            $d = (string) ($r['d'] ?? '');
+            if ($d !== '') {
+                $map[$d] = (int) ($r['c'] ?? 0);
+            }
+        }
+
+        $out = [];
+        for ($t = $startTs; $t <= $endTs; $t += 86400) {
+            $day = date('Y-m-d', $t);
+            $out[] = ['d' => $day, 'c' => $map[$day] ?? 0];
+        }
+
+        return $out;
+    }
 }

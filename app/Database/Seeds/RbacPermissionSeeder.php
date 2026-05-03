@@ -53,6 +53,7 @@ class RbacPermissionSeeder extends Seeder
             ['slug' => 'cases.status_update', 'name' => 'Change case status', 'description' => 'Move cases through workflow'],
 
             ['slug' => 'dashboard.view', 'name' => 'View dashboard', 'description' => 'Access analytics dashboard'],
+            ['slug' => 'reports.view', 'name' => 'View reports', 'description' => 'Access analytics reports and exports'],
             ['slug' => 'activities.view', 'name' => 'View activity log', 'description' => 'Read audit activity feed'],
             ['slug' => 'settings.manage', 'name' => 'Manage settings', 'description' => 'Configure roles and permissions'],
             ['slug' => 'users.manage', 'name' => 'Manage users', 'description' => 'Create and deactivate user accounts'],
@@ -82,6 +83,7 @@ class RbacPermissionSeeder extends Seeder
 
         $viewerSlugs = array_values(array_filter($allSlugs, static fn (string $s) => str_ends_with($s, '.view')
             || $s === 'dashboard.view'
+            || $s === 'reports.view'
             || $s === 'activities.view'));
 
         $managerSlugs = array_merge(
@@ -92,7 +94,7 @@ class RbacPermissionSeeder extends Seeder
                 'licenses.view', 'licenses.create', 'licenses.update',
                 'usage_reports.view', 'usage_reports.create', 'usage_reports.update',
                 'cases.view', 'cases.create', 'cases.update', 'cases.status_update',
-                'dashboard.view', 'activities.view',
+                'dashboard.view', 'reports.view', 'activities.view',
             ],
         );
 

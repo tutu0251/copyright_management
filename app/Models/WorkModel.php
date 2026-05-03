@@ -232,4 +232,171 @@ class WorkModel extends Model
 
         return $map;
     }
+
+    /**
+     * Total non-deleted works, optionally filtered by work_type.
+     */
+    public function countCatalog(?string $workType = null): int
+    {
+        $b = $this->builder()->where('deleted_at', null);
+        if ($workType !== null && $workType !== '') {
+            $b->where('work_type', $workType);
+        }
+
+        return (int) $b->countAllResults();
+    }
+
+    /**
+     * Count of works whose created_at falls in [start, end] (inclusive day bounds).
+     *
+     * @param non-empty-string|null $start 'Y-m-d' or datetime
+     * @param non-empty-string|null $end   'Y-m-d' or datetime
+     */
+    public function countCreatedBetween(?string $start, ?string $end, ?string $workType = null): int
+    {
+        $b = $this->builder()->where('deleted_at', null);
+        if ($workType !== null && $workType !== '') {
+            $b->where('work_type', $workType);
+        }
+        if ($start !== null && $start !== '') {
+            $b->where('created_at >=', $start);
+        }
+        if ($end !== null && $end !== '') {
+            $endBound = strlen((string) $end) === 10 ? $end . ' 23:59:59' : $end;
+            $b->where('created_at <=', $endBound);
+        }
+
+        return (int) $b->countAllResults();
+    }
+
+    /**
+     * Works grouped by work_type (non-deleted), optional created_at window and type filter.
+     *
+     * @return list<array{work_type: string, c: int}>
+     */
+    public function countsByWorkTypeWindow(?string $start, ?string $end, ?string $workTypeOnly = null): array
+    {
+        $b = $this->builder()
+            ->select('work_type')
+            ->select('COUNT(*) AS c', false)
+            ->where('deleted_at', null)
+            ->where('work_type !=', '');
+
+        if ($workTypeOnly !== null && $workTypeOnly !== '') {
+            $b->where('work_type', $workTypeOnly);
+        }
+        if ($start !== null && $start !== '') {
+            $b->where('created_at >=', $start);
+        }
+        if ($end !== null && $end !== '') {
+            $endBound = strlen((string) $end) === 10 ? $end . ' 23:59:59' : $end;
+            $b->where('created_at <=', $endBound);
+        }
+
+        $rows = $b->groupBy('work_type')->orderBy('c', 'DESC')->get()->getResultArray();
+        $out  = [];
+        foreach ($rows as $r) {
+            $out[] = [
+                'work_type' => (string) ($r['work_type'] ?? ''),
+                'c'         => (int) ($r['c'] ?? 0),
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * New works per day (created_at) within inclusive date range (Y-m-d).
+     *
+     * @return list<array{d: string, c: int}> contiguous days with zero fill
+     */
+    public function countCreatedByDayBetween(string $startDate, string $endDate, ?string $workType = null): array
+    {
+        $startTs = strtotime($startDate . ' 00:00:00');
+        $endTs   = strtotime($endDate . ' 23:59:59');
+        if ($startTs === false || $endTs === false || $startTs > $endTs) {
+            return [];
+        }
+
+        $b = $this->builder()
+            ->select("DATE(created_at) AS d", false)
+            ->select('COUNT(*) AS c', false)
+            ->where('deleted_at', null)
+            ->where('DATE(created_at) >=', date('Y-m-d', $startTs))
+            ->where('DATE(created_at) <=', date('Y-m-d', $endTs));
+
+        if ($workType !== null && $workType !== '') {
+            $b->where('work_type', $workType);
+        }
+
+        $rows = $b->groupBy('DATE(created_at)', false)->orderBy('d', 'ASC')->get()->getResultArray();
+
+        $map = [];
+        foreach ($rows as $r) {
+            $d = (string) ($r['d'] ?? '');
+            if ($d !== '') {
+                $map[$d] = (int) ($r['c'] ?? 0);
+            }
+        }
+
+        $out = [];
+        for ($t = $startTs; $t <= $endTs; $t += 86400) {
+            $day = date('Y-m-d', $t);
+            $out[] = ['d' => $day, 'c' => $map[$day] ?? 0];
+        }
+
+        return $out;
+    }
+
+    /**
+     * Top owners by distinct linked work count (work_owners pivot).
+     *
+     * @return list<array{owner_id: int, name: string, work_count: int}>
+     */
+    public function topOwnersByLinkedWorks(int $limit, ?string $workCreatedStart, ?string $workCreatedEnd, ?string $workType = null): array
+    {
+        if (! $this->db->tableExists('work_owners') || ! $this->db->tableExists('owners')) {
+            return [];
+        }
+
+        $limit = max(1, min(50, $limit));
+        $wt    = $this->db->prefixTable('works');
+        $wo    = $this->db->prefixTable('work_owners');
+        $ow    = $this->db->prefixTable('owners');
+
+        $sql  = "SELECT o.id AS owner_id, o.name, COUNT(DISTINCT w.id) AS work_count
+            FROM `{$wo}` wo
+            INNER JOIN `{$ow}` o ON o.id = wo.owner_id";
+        if ($this->db->fieldExists('deleted_at', 'owners')) {
+            $sql .= ' AND o.deleted_at IS NULL';
+        }
+        $sql .= " INNER JOIN `{$wt}` w ON w.id = wo.work_id AND w.deleted_at IS NULL
+            WHERE wo.deleted_at IS NULL";
+        $bind = [];
+        if ($workType !== null && $workType !== '') {
+            $sql .= ' AND w.work_type = ?';
+            $bind[] = $workType;
+        }
+        if ($workCreatedStart !== null && $workCreatedStart !== '') {
+            $sql .= ' AND w.created_at >= ?';
+            $bind[] = $workCreatedStart;
+        }
+        if ($workCreatedEnd !== null && $workCreatedEnd !== '') {
+            $sql .= ' AND w.created_at <= ?';
+            $bind[] = $workCreatedEnd . (strlen($workCreatedEnd) === 10 ? ' 23:59:59' : '');
+        }
+        $sql .= ' GROUP BY o.id, o.name ORDER BY work_count DESC, o.id ASC LIMIT ' . $limit;
+
+        $rows = $this->db->query($sql, $bind)->getResultArray();
+        $out   = [];
+        foreach ($rows as $r) {
+            $out[] = [
+                'owner_id'   => (int) ($r['owner_id'] ?? 0),
+                'name'       => (string) ($r['name'] ?? ''),
+                'work_count' => (int) ($r['work_count'] ?? 0),
+            ];
+        }
+
+        return $out;
+    }
 }

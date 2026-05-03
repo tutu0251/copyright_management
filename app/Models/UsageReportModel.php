@@ -313,4 +313,173 @@ class UsageReportModel extends Model
 
         return $out;
     }
+
+    /**
+     * @return array<string, int> usage_type => count
+     */
+    public function countsByUsageTypeBetween(?string $start, ?string $end, ?string $workType = null): array
+    {
+        if (! self::monitoringSchemaReady()) {
+            return [];
+        }
+
+        $ur = $this->db->prefixTable('usage_reports');
+        $wt = $this->db->prefixTable('works');
+
+        $b = $this->builder()
+            ->select("{$ur}.usage_type AS ut", false)
+            ->select('COUNT(*) AS c', false)
+            ->join("{$wt} w", "w.id = {$ur}.work_id", 'inner')
+            ->where("{$ur}.deleted_at", null)
+            ->where('w.deleted_at', null);
+
+        if ($workType !== null && $workType !== '') {
+            $b->where('w.work_type', $workType);
+        }
+        if ($start !== null && $start !== '') {
+            $b->where("{$ur}.detected_at >=", $start);
+        }
+        if ($end !== null && $end !== '') {
+            $endBound = strlen((string) $end) === 10 ? $end . ' 23:59:59' : $end;
+            $b->where("{$ur}.detected_at <=", $endBound);
+        }
+
+        $rows = $b->groupBy("{$ur}.usage_type")->get()->getResultArray();
+        $out  = [];
+        foreach (self::USAGE_TYPES as $u) {
+            $out[$u] = 0;
+        }
+        foreach ($rows as $r) {
+            $k = (string) ($r['ut'] ?? '');
+            if ($k !== '') {
+                $out[$k] = (int) ($r['c'] ?? 0);
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * @return array<string, int> detected_type => count
+     */
+    public function countsByDetectedTypeBetween(?string $start, ?string $end, ?string $workType = null): array
+    {
+        if (! self::monitoringSchemaReady()) {
+            return [];
+        }
+
+        $ur = $this->db->prefixTable('usage_reports');
+        $wt = $this->db->prefixTable('works');
+
+        $b = $this->builder()
+            ->select("{$ur}.detected_type AS dt", false)
+            ->select('COUNT(*) AS c', false)
+            ->join("{$wt} w", "w.id = {$ur}.work_id", 'inner')
+            ->where("{$ur}.deleted_at", null)
+            ->where('w.deleted_at', null);
+
+        if ($workType !== null && $workType !== '') {
+            $b->where('w.work_type', $workType);
+        }
+        if ($start !== null && $start !== '') {
+            $b->where("{$ur}.detected_at >=", $start);
+        }
+        if ($end !== null && $end !== '') {
+            $endBound = strlen((string) $end) === 10 ? $end . ' 23:59:59' : $end;
+            $b->where("{$ur}.detected_at <=", $endBound);
+        }
+
+        $rows = $b->groupBy("{$ur}.detected_type")->get()->getResultArray();
+        $out  = [];
+        foreach (self::DETECTED_TYPES as $d) {
+            $out[$d] = 0;
+        }
+        foreach ($rows as $r) {
+            $k = (string) ($r['dt'] ?? '');
+            if ($k !== '') {
+                $out[$k] = (int) ($r['c'] ?? 0);
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Detections per calendar day (DATE(detected_at)), zero-filled between bounds.
+     *
+     * @return list<array{d: string, c: int}>
+     */
+    public function countDetectionsByDayBetween(string $startDate, string $endDate, ?string $workType = null): array
+    {
+        if (! self::monitoringSchemaReady()) {
+            return [];
+        }
+
+        $startTs = strtotime($startDate . ' 00:00:00');
+        $endTs   = strtotime($endDate . ' 23:59:59');
+        if ($startTs === false || $endTs === false || $startTs > $endTs) {
+            return [];
+        }
+
+        $ur = $this->db->prefixTable('usage_reports');
+        $wt = $this->db->prefixTable('works');
+
+        $b = $this->builder()
+            ->select("DATE({$ur}.detected_at) AS d", false)
+            ->select('COUNT(*) AS c', false)
+            ->join("{$wt} w", "w.id = {$ur}.work_id", 'inner')
+            ->where("{$ur}.deleted_at", null)
+            ->where('w.deleted_at', null)
+            ->where("DATE({$ur}.detected_at) >=", date('Y-m-d', $startTs))
+            ->where("DATE({$ur}.detected_at) <=", date('Y-m-d', $endTs));
+
+        if ($workType !== null && $workType !== '') {
+            $b->where('w.work_type', $workType);
+        }
+
+        $rows = $b->groupBy("DATE({$ur}.detected_at)", false)->orderBy('d', 'ASC')->get()->getResultArray();
+        $map  = [];
+        foreach ($rows as $r) {
+            $d = (string) ($r['d'] ?? '');
+            if ($d !== '') {
+                $map[$d] = (int) ($r['c'] ?? 0);
+            }
+        }
+
+        $out = [];
+        for ($t = $startTs; $t <= $endTs; $t += 86400) {
+            $day = date('Y-m-d', $t);
+            $out[] = ['d' => $day, 'c' => $map[$day] ?? 0];
+        }
+
+        return $out;
+    }
+
+    public function countDetectionsBetween(?string $start, ?string $end, ?string $workType = null): int
+    {
+        if (! self::monitoringSchemaReady()) {
+            return 0;
+        }
+
+        $ur = $this->db->prefixTable('usage_reports');
+        $wt = $this->db->prefixTable('works');
+
+        $b = $this->builder()
+            ->join("{$wt} w", "w.id = {$ur}.work_id", 'inner')
+            ->where("{$ur}.deleted_at", null)
+            ->where('w.deleted_at', null);
+
+        if ($workType !== null && $workType !== '') {
+            $b->where('w.work_type', $workType);
+        }
+        if ($start !== null && $start !== '') {
+            $b->where("{$ur}.detected_at >=", $start);
+        }
+        if ($end !== null && $end !== '') {
+            $endBound = strlen((string) $end) === 10 ? $end . ' 23:59:59' : $end;
+            $b->where("{$ur}.detected_at <=", $endBound);
+        }
+
+        return (int) $b->countAllResults();
+    }
 }

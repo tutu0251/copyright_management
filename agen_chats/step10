@@ -1,0 +1,207 @@
+You are a senior CodeIgniter 4 engineer.
+
+I am building a **Copyright Management System**.
+
+## Current Progress
+
+* Step 1: Authentication ✔
+* Step 2: Asset Registry ✔
+* Step 3: Ownership ✔
+* Step 4: License Management ✔
+* Step 5: Usage Reports ✔
+* Step 6: Infringement Cases ✔
+* Step 7: Audit Logs ✔
+* Step 8: Advanced Dashboard ✔
+* Step 9: RBAC / Permissions ✔
+
+The mockup UI exists separately and must NOT be modified.
+All real implementation must be separate from mockup.
+
+---
+
+## Now implement Step 10: Reports Page (Business & Export Layer)
+
+### 🎯 Goal
+
+Build a **comprehensive Reports module** for analytics, filtering, and export.
+
+---
+
+## 📊 Reports to Implement
+
+### 1. Works Report
+
+* total works
+* works by type
+* works by owner
+* works created over time
+
+---
+
+### 2. License Report
+
+* active licenses
+* expired licenses
+* expiring soon (next 30 days)
+* revenue summary
+* unpaid vs paid
+
+---
+
+### 3. Usage Report
+
+* total detections
+* authorized vs suspected vs infringement
+* detections by source type
+* detections over time
+
+---
+
+### 4. Infringement Report
+
+* total cases
+* open vs resolved
+* cases by priority
+* average resolution time
+
+---
+
+### 5. User Activity Report
+
+* actions per user
+* most active users
+* activity trends
+
+---
+
+## 📅 Filters (IMPORTANT)
+
+Add global filters:
+
+* date range:
+
+  * last 7 days
+  * last 30 days
+  * last 90 days
+  * custom range
+* work type
+* license status
+* case status
+
+---
+
+## 📈 Charts
+
+Use **Chart.js (CDN)**:
+
+* bar chart
+* line chart
+* pie chart
+
+---
+
+## 📄 Export Feature
+
+Implement export:
+
+### 1. CSV Export
+
+* downloadable reports
+
+### 2. PDF Export (basic)
+
+* simple report layout
+
+---
+
+## 🧠 Controller
+
+Create:
+
+```text
+main/Controllers/Reports.php
+```
+
+Responsibilities:
+
+* gather aggregated data
+* apply filters
+* prepare datasets for charts
+* handle export requests
+
+---
+
+## 🧩 Models
+
+Extend existing models to support:
+
+* grouped queries
+* filtered queries
+* date-based aggregation
+
+---
+
+## 🖥️ Views
+
+Create:
+
+```text
+main/Views/reports/
+  index.php
+  works.php
+  licenses.php
+  usage.php
+  cases.php
+  activity.php
+```
+
+UI should:
+
+* follow enterprise dashboard style
+* include filters panel
+* include charts + tables
+* include export buttons
+
+---
+
+## 🔗 Routes
+
+```php
+GET /reports
+GET /reports/works
+GET /reports/licenses
+GET /reports/usage
+GET /reports/cases
+GET /reports/activity
+
+GET /reports/export/csv
+GET /reports/export/pdf
+```
+
+---
+
+## ⚠️ Constraints
+
+* Do NOT modify mockup files
+* Use real DB data
+* Keep performance in mind (avoid heavy queries)
+* Use pagination where needed
+* Sanitize all outputs
+* Use CSRF where required
+
+---
+
+## 🚀 Output
+
+Generate full code for:
+
+* controller
+* model query methods
+* views
+* Chart.js integration
+* CSV export logic
+* basic PDF export logic
+
+---
+
+Start Step 10 now.
