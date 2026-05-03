@@ -41,19 +41,22 @@ class AuditLogModel extends Model
     /**
      * @return list<array<string, mixed>>
      */
-    public function listRecentWithUsers(int $limit = 100, int $offset = 0): array
+    public function listRecentWithUsers(int $limit = 100, int $offset = 0, ?string $createdSince = null): array
     {
         $limit  = max(1, min(500, $limit));
         $offset = max(0, $offset);
 
-        return $this->builder()
+        $b = $this->builder()
             ->select('audit_logs.*, users.display_name AS actor_name, users.email AS actor_email')
             ->join('users', 'users.id = audit_logs.user_id', 'left')
             ->orderBy('audit_logs.created_at', 'DESC')
-            ->orderBy('audit_logs.id', 'DESC')
-            ->limit($limit, $offset)
-            ->get()
-            ->getResultArray();
+            ->orderBy('audit_logs.id', 'DESC');
+
+        if ($createdSince !== null && $createdSince !== '') {
+            $b->where('audit_logs.created_at >=', $createdSince);
+        }
+
+        return $b->limit($limit, $offset)->get()->getResultArray();
     }
 
     /**

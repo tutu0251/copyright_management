@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Config\CopyrightMockData;
 use App\Models\AuditLogModel;
 use App\Models\InfringementCaseModel;
+use App\Models\LicenseeModel;
 use App\Models\LicenseModel;
 use App\Models\UsageReportModel;
 use App\Models\WorkModel;
@@ -14,6 +14,8 @@ use App\Models\WorkModel;
 class Dashboard extends BaseController
 {
     protected $helpers = ['form', 'url', 'auth'];
+
+    private const CHART_MONTHS = 12;
 
     private function layout(string $view, array $data = []): string
     {
@@ -44,20 +46,69 @@ class Dashboard extends BaseController
             'appCrumb'        => 'Copyright Management · Signed in',
         ];
 
-        $payload           = array_merge($defaults, $data);
+        $payload            = array_merge($defaults, $data);
         $payload['content'] = view($view, $payload);
 
         return view('layouts/main', $payload);
     }
 
+    /**
+     * @return list<array{ym: string, label: string}>
+     */
+    private function chartMonthAxis(int $months): array
+    {
+        $months = max(1, min(24, $months));
+        $rows   = [];
+        for ($i = $months - 1; $i >= 0; $i--) {
+            $ym    = date('Y-m', strtotime('-' . $i . ' months'));
+            $rows[] = [
+                'ym'    => $ym,
+                'label' => date('M Y', strtotime($ym . '-01')),
+            ];
+        }
+
+        return $rows;
+    }
+
+    /**
+     * @param array<string, int|float> $ymMap
+     * @return list<int|float>
+     */
+    private function alignYmSeries(array $monthAxis, array $ymMap): array
+    {
+        $out = [];
+        foreach ($monthAxis as $row) {
+            $ym    = $row['ym'];
+            $out[] = $ymMap[$ym] ?? 0;
+        }
+
+        return $out;
+    }
+
     public function index(): string
     {
-        $db        = db_connect();
+        $db = db_connect();
+
+        $rangeDays = (int) ($this->request->getGet('range') ?? 30);
+        if (! in_array($rangeDays, [7, 30, 90], true)) {
+            $rangeDays = 30;
+        }
+
         $workModel = model(WorkModel::class);
+        $workType  = trim((string) ($this->request->getGet('work_type') ?? ''));
+        $types     = $workModel->distinctWorkTypes();
+        if ($workType !== '' && ! in_array($workType, $types, true)) {
+            $workType = '';
+        }
+
+        $rangeSince     = date('Y-m-d H:i:s', strtotime('-' . $rangeDays . ' days'));
+        $licenseSince   = $rangeSince;
+        $usageSince     = $rangeSince;
+        $auditFeedSince = $rangeSince;
 
         $licTable = $db->prefixTable('licenses');
 
-        $totalLicenses = $db->table('licenses')->where('deleted_at', null)->countAllResults();
+        $totalLicenses = (int) $db->table('licenses')->where('deleted_at', null)->countAllResults();
 
         $activeLicensesRow = $db->query(
             "SELECT COUNT(*) AS c FROM `{$licTable}` lic
@@ -90,17 +141,18 @@ class Dashboard extends BaseController
             [LicenseModel::PAYMENT_UNPAID, LicenseModel::PAYMENT_PARTIAL],
         )->getRowArray();
         $licenseUnpaid = (float) ($unpaidRow['s'] ?? 0);
-        $caseModel       = model(InfringementCaseModel::class);
-        $casesSchemaOk   = InfringementCaseModel::schemaReady();
-        $totalCases      = $casesSchemaOk ? (int) $caseModel->countAll() : 0;
-        $openCases       = $casesSchemaOk ? $caseModel->countOpen() : 0;
-        $highPriOpen     = $casesSchemaOk ? $caseModel->countHighPriorityOpen() : 0;
-        $resolvedCases   = $casesSchemaOk ? $caseModel->countResolved() : 0;
-        $casesByStatus   = $casesSchemaOk ? $caseModel->countsByStatus() : [];
 
-        $usageTotal          = 0;
-        $usageSuspected      = 0;
-        $usageInfringement   = 0;
+        $caseModel     = model(InfringementCaseModel::class);
+        $casesSchemaOk = InfringementCaseModel::schemaReady();
+        $totalCases    = $casesSchemaOk ? (int) $caseModel->countAll() : 0;
+        $openCases     = $casesSchemaOk ? $caseModel->countOpen() : 0;
+        $highPriOpen   = $casesSchemaOk ? $caseModel->countHighPriorityOpen() : 0;
+        $resolvedCases = $casesSchemaOk ? $caseModel->countResolved() : 0;
+        $casesByStatus = $casesSchemaOk ? $caseModel->countsByStatus() : [];
+
+        $usageTotal        = 0;
+        $usageSuspected    = 0;
+        $usageInfringement = 0;
         $recentUsageDetections = [];
         if ($db->tableExists('usage_reports') && $db->fieldExists('work_id', 'usage_reports')) {
             $usageTotal = (int) $db->table('usage_reports')->where('deleted_at', null)->countAllResults();
@@ -112,39 +164,43 @@ class Dashboard extends BaseController
                 ->where('deleted_at', null)
                 ->where('usage_type', UsageReportModel::USAGE_INFRINGEMENT)
                 ->countAllResults();
-            $rawRecent = model(UsageReportModel::class)->listRecentDetections(7, 12);
+            $rawRecent = model(UsageReportModel::class)->listRecentDetections($rangeDays, 12);
             foreach ($rawRecent as $rr) {
                 $slug = (string) ($rr['usage_type'] ?? '');
                 $recentUsageDetections[] = [
-                    'id'           => (int) ($rr['id'] ?? 0),
-                    'work_title'   => (string) ($rr['work_title'] ?? '—'),
-                    'source'       => (string) ($rr['detected_source'] ?? ''),
-                    'detected_at'  => (string) ($rr['detected_at'] ?? ''),
-                    'usage_label'  => UsageReportModel::usageTypeLabel($slug),
-                    'usage_tone'   => UsageReportModel::usageTypeBadgeTone($slug),
+                    'id'          => (int) ($rr['id'] ?? 0),
+                    'work_title'  => (string) ($rr['work_title'] ?? '—'),
+                    'source'      => (string) ($rr['detected_source'] ?? ''),
+                    'detected_at' => (string) ($rr['detected_at'] ?? ''),
+                    'usage_label' => UsageReportModel::usageTypeLabel($slug),
+                    'usage_tone'  => UsageReportModel::usageTypeBadgeTone($slug),
                 ];
             }
         }
 
         $worksCount = (int) $workModel->countAllResults();
+        if ($workType !== '') {
+            $worksCount = (int) $workModel->where('deleted_at', null)->where('work_type', $workType)->countAllResults();
+        }
 
-        $ownersCount         = 0;
-        $worksMultiOwners    = 0;
-        $worksWithoutOwner   = 0;
+        $ownersCount       = 0;
+        $worksMultiOwners  = 0;
+        $worksWithoutOwner = 0;
 
         if ($db->tableExists('owners')) {
             $ownersCount = $db->fieldExists('deleted_at', 'owners')
-                ? $db->table('owners')->where('deleted_at', null)->countAllResults()
-                : $db->table('owners')->countAllResults();
+                ? (int) $db->table('owners')->where('deleted_at', null)->countAllResults()
+                : (int) $db->table('owners')->countAllResults();
         }
 
         if ($db->tableExists('work_owners')) {
             $woTable = $db->prefixTable('work_owners');
             $wTable  = $db->prefixTable('works');
+            $typeF   = $workType !== '' ? ' AND w.work_type = ' . $db->escape($workType) : '';
             $multiRow = $db->query(
                 "SELECT COUNT(*) AS c FROM (
                     SELECT wo.work_id FROM `{$woTable}` wo
-                    INNER JOIN `{$wTable}` w ON w.id = wo.work_id AND w.deleted_at IS NULL
+                    INNER JOIN `{$wTable}` w ON w.id = wo.work_id AND w.deleted_at IS NULL{$typeF}
                     WHERE wo.deleted_at IS NULL
                     GROUP BY wo.work_id HAVING COUNT(wo.id) > 1
                 ) t",
@@ -153,7 +209,7 @@ class Dashboard extends BaseController
 
             $noOwnerRow = $db->query(
                 "SELECT COUNT(*) AS c FROM `{$wTable}` w
-                WHERE w.deleted_at IS NULL
+                WHERE w.deleted_at IS NULL{$typeF}
                 AND NOT EXISTS (
                     SELECT 1 FROM `{$woTable}` wo
                     WHERE wo.work_id = w.id AND wo.deleted_at IS NULL
@@ -162,9 +218,13 @@ class Dashboard extends BaseController
             $worksWithoutOwner = (int) ($noOwnerRow['c'] ?? 0);
         }
 
-        $pinnedRows = $workModel
+        $pinnedQuery = $workModel
             ->select('id, title, copyright_status')
-            ->orderBy('updated_at', 'DESC')
+            ->where('deleted_at', null);
+        if ($workType !== '') {
+            $pinnedQuery->where('work_type', $workType);
+        }
+        $pinnedRows = $pinnedQuery->orderBy('updated_at', 'DESC')
             ->orderBy('id', 'DESC')
             ->limit(5)
             ->findAll();
@@ -172,13 +232,39 @@ class Dashboard extends BaseController
         $pinnedWorks = [];
         foreach ($pinnedRows as $row) {
             $pinnedWorks[] = [
-                'work_id'           => (string) $row['id'],
-                'title'             => (string) $row['title'],
-                'copyright_status'  => (string) $row['copyright_status'],
+                'work_id'          => (string) $row['id'],
+                'title'            => (string) $row['title'],
+                'copyright_status' => (string) $row['copyright_status'],
             ];
         }
 
-        $labels = CopyrightMockData::chartMonthLabels();
+        $licenseModel = model(LicenseModel::class);
+        $monthAxis    = $this->chartMonthAxis(self::CHART_MONTHS);
+
+        $worksByMonth = $workModel->countNewWorksByMonth(self::CHART_MONTHS, $workType !== '' ? $workType : null);
+        $registeredWorksSeries = array_map(static fn ($v) => (int) $v, $this->alignYmSeries($monthAxis, $worksByMonth));
+
+        $licActivity = $licenseModel->monthlyActiveVsExpiredEndOfMonth(self::CHART_MONTHS, $workType !== '' ? $workType : null);
+        $activeLicSeries  = $licActivity['active'];
+        $expiredLicSeries = $licActivity['expired'];
+
+        $feeByMonth = $licenseModel->sumPaidFeesByLicenseCreatedMonth(self::CHART_MONTHS, $workType !== '' ? $workType : null);
+        $revenueChart = [];
+        foreach ($monthAxis as $row) {
+            $ym            = $row['ym'];
+            $revenueChart[] = [
+                'month'  => $row['label'],
+                'amount' => round((float) ($feeByMonth[$ym] ?? 0), 2),
+            ];
+        }
+
+        $openedByMonth   = $casesSchemaOk ? $caseModel->countOpenedByMonth(self::CHART_MONTHS) : [];
+        $resolvedByMonth = $casesSchemaOk ? $caseModel->countResolvedByMonth(self::CHART_MONTHS) : [];
+        $infDetected     = array_map(static fn ($v) => (int) $v, $this->alignYmSeries($monthAxis, $openedByMonth));
+        $infResolved     = array_map(static fn ($v) => (int) $v, $this->alignYmSeries($monthAxis, $resolvedByMonth));
+
+        $labels = array_column($monthAxis, 'label');
+
         $caseStatusLabels = [];
         $caseStatusValues = [];
         if ($casesByStatus !== []) {
@@ -190,20 +276,25 @@ class Dashboard extends BaseController
 
         $chartPayload = [
             'labels'              => $labels,
-            'registeredWorks'     => CopyrightMockData::registeredWorksMonthly(),
-            'activeLicenses'      => CopyrightMockData::activeLicensesMonthly(),
-            'infringement'        => CopyrightMockData::infringementMonthly(),
-            'revenue'             => CopyrightMockData::licenseRevenueMonthly(),
+            'registeredWorks'     => $registeredWorksSeries,
+            'activeLicenses'      => $activeLicSeries,
+            'expiredLicenses'     => $expiredLicSeries,
+            'infringement'        => [
+                'detected'  => $infDetected,
+                'resolved'  => $infResolved,
+            ],
+            'revenue'             => $revenueChart,
             'caseStatusLabels'    => $caseStatusLabels,
             'caseStatusValues'    => $caseStatusValues,
         ];
 
-        $activityFeed = CopyrightMockData::recentActivity();
+        $activityFeed   = [];
         $auditTodayCount = 0;
         $auditTopLabel   = '—';
-        if (AuditLogModel::schemaReady()) {
-            $auditModel      = model(AuditLogModel::class);
-            $dayStart        = date('Y-m-d 00:00:00');
+        $auditFeedLive   = AuditLogModel::schemaReady();
+        if ($auditFeedLive) {
+            $auditModel = model(AuditLogModel::class);
+            $dayStart   = date('Y-m-d 00:00:00');
             $auditTodayCount = $auditModel->countSince($dayStart);
             $topUsers        = $auditModel->topUsersSince($dayStart, 5);
             if ($topUsers !== []) {
@@ -217,8 +308,7 @@ class Dashboard extends BaseController
                 }
                 $auditTopLabel = implode(', ', $parts);
             }
-            $rawFeed     = $auditModel->listRecentWithUsers(12, 0);
-            $activityFeed = [];
+            $rawFeed = $auditModel->listRecentWithUsers(20, 0, $auditFeedSince);
             foreach ($rawFeed as $r) {
                 $actor = (string) ($r['actor_name'] ?? '') !== ''
                     ? (string) $r['actor_name']
@@ -228,46 +318,42 @@ class Dashboard extends BaseController
                 $eid    = isset($r['entity_id']) && $r['entity_id'] !== null && $r['entity_id'] !== '' ? (int) $r['entity_id'] : 0;
                 $elab   = $et !== '' ? ($eid > 0 ? $et . ' #' . $eid : $et) : '—';
                 $activityFeed[] = [
-                    'time' => (string) ($r['created_at'] ?? ''),
-                    'text' => $actor . ' · ' . $action . ' · ' . $elab,
-                    'type' => $et !== '' ? preg_replace('/[^a-z]/i', '', $et) : 'audit',
+                    'time'   => (string) ($r['created_at'] ?? ''),
+                    'actor'  => $actor,
+                    'action' => $action,
+                    'entity' => $elab,
+                    'type'   => $et !== '' ? preg_replace('/[^a-z]/i', '', $et) : 'audit',
                 ];
             }
         }
 
-        $stats = [
+        $topLicensedWorks = $licenseModel->topLicensedWorks(8, $workType !== '' ? $workType : null, $licenseSince);
+        $topLicensees     = model(LicenseeModel::class)->topByNewLicensesSince($licenseSince, 8, $workType !== '' ? $workType : null);
+        $topReportedWorks = UsageReportModel::monitoringSchemaReady()
+            ? model(UsageReportModel::class)->topWorksByReportCount(8, $usageSince, $workType !== '' ? $workType : null)
+            : [];
+
+        $dashboardUrl = site_url('dashboard');
+
+        $primaryStats = [
             [
-                'label' => 'Registered works',
+                'label' => 'Total works',
                 'value' => (string) $worksCount,
-                'hint'  => 'Assets in your catalog',
+                'hint'  => $workType !== '' ? 'Filtered by work type' : 'Assets in your catalog',
                 'kpi'   => 'works',
                 'kpi_href' => site_url('works'),
             ],
             [
-                'label' => 'Owners in registry',
+                'label' => 'Total owners',
                 'value' => (string) $ownersCount,
-                'hint'  => 'Parties you can link to assets',
+                'hint'  => 'Parties in the registry',
                 'kpi'   => 'owners',
                 'kpi_href' => site_url('owners'),
             ],
             [
-                'label' => 'Works with multiple owners',
-                'value' => (string) $worksMultiOwners,
-                'hint'  => 'Assets with more than one linked owner',
-                'kpi'   => 'multi',
-                'kpi_href' => site_url('works'),
-            ],
-            [
-                'label' => 'Works without owner link',
-                'value' => (string) $worksWithoutOwner,
-                'hint'  => 'No rows in work ownership yet',
-                'kpi'   => 'noowner',
-                'kpi_href' => site_url('works'),
-            ],
-            [
                 'label' => 'Total licenses',
                 'value' => (string) $totalLicenses,
-                'hint'  => 'All license records (excluding archived)',
+                'hint'  => 'All license records (excluding deleted)',
                 'kpi'   => 'lic_total',
                 'kpi_href' => site_url('licenses'),
             ],
@@ -281,43 +367,43 @@ class Dashboard extends BaseController
             [
                 'label' => 'Expiring within 30 days',
                 'value' => (string) $expiringLicenses30,
-                'hint'  => 'End date in the next month (excluding draft/cancelled)',
+                'hint'  => 'End date in the next month',
                 'kpi'   => 'lic_exp',
                 'kpi_href' => site_url('licenses'),
             ],
             [
-                'label' => 'License revenue (paid)',
+                'label' => 'Total revenue (paid fees)',
                 'value' => '$' . number_format($licenseRevenue, 2),
-                'hint'  => 'Sum of fee where payment is marked paid',
+                'hint'  => 'Sum of fee where payment is paid',
                 'kpi'   => 'lic_rev',
                 'kpi_href' => site_url('licenses'),
             ],
             [
                 'label' => 'Unpaid license fees',
                 'value' => '$' . number_format($licenseUnpaid, 2),
-                'hint'  => 'Sum of fee where payment is unpaid or partial',
+                'hint'  => 'Unpaid or partial payment',
                 'kpi'   => 'lic_unpaid',
                 'kpi_href' => site_url('licenses'),
             ],
             [
-                'label' => 'Infringement cases (total)',
-                'value' => (string) $totalCases,
-                'hint'  => 'All case records in workflow',
-                'kpi'   => 'cases_total',
-                'kpi_href' => site_url('cases'),
+                'label' => 'Usage reports (total)',
+                'value' => (string) $usageTotal,
+                'hint'  => 'Monitoring entries on file',
+                'kpi'   => 'usage_total',
+                'kpi_href' => site_url('usage-reports'),
             ],
             [
-                'label' => 'Open infringement cases',
+                'label' => 'Infringement reports',
+                'value' => (string) $usageInfringement,
+                'hint'  => 'Usage reports flagged as infringement',
+                'kpi'   => 'usage_infringement',
+                'kpi_href' => site_url('usage-reports?usage_type=infringement'),
+            ],
+            [
+                'label' => 'Open cases',
                 'value' => (string) $openCases,
-                'hint'  => 'Excluding resolved and rejected',
+                'hint'  => 'Infringement cases not resolved or rejected',
                 'kpi'   => 'cases_open',
-                'kpi_href' => site_url('cases'),
-            ],
-            [
-                'label' => 'High-priority open cases',
-                'value' => (string) $highPriOpen,
-                'hint'  => 'Open cases marked high or critical priority',
-                'kpi'   => 'cases_high',
                 'kpi_href' => site_url('cases'),
             ],
             [
@@ -327,12 +413,22 @@ class Dashboard extends BaseController
                 'kpi'   => 'cases_resolved',
                 'kpi_href' => site_url('cases?case_status=resolved'),
             ],
+        ];
+
+        $extraStats = [
             [
-                'label' => 'Usage reports (total)',
-                'value' => (string) $usageTotal,
-                'hint'  => 'Work-level detections on file',
-                'kpi'   => 'usage_total',
-                'kpi_href' => site_url('usage-reports'),
+                'label' => 'Total infringement cases',
+                'value' => (string) $totalCases,
+                'hint'  => 'All case records',
+                'kpi'   => 'cases_total',
+                'kpi_href' => site_url('cases'),
+            ],
+            [
+                'label' => 'High-priority open cases',
+                'value' => (string) $highPriOpen,
+                'hint'  => 'Open cases marked high or critical',
+                'kpi'   => 'cases_high',
+                'kpi_href' => site_url('cases'),
             ],
             [
                 'label' => 'Suspected usage',
@@ -342,26 +438,33 @@ class Dashboard extends BaseController
                 'kpi_href' => site_url('usage-reports?usage_type=suspected'),
             ],
             [
-                'label' => 'Infringement usage',
-                'value' => (string) $usageInfringement,
-                'hint'  => 'Reports flagged as infringement',
-                'kpi'   => 'usage_infringement',
-                'kpi_href' => site_url('usage-reports?usage_type=infringement'),
+                'label' => 'Works with multiple owners',
+                'value' => (string) $worksMultiOwners,
+                'hint'  => 'More than one linked owner',
+                'kpi'   => 'multi',
+                'kpi_href' => site_url('works'),
+            ],
+            [
+                'label' => 'Works without owner link',
+                'value' => (string) $worksWithoutOwner,
+                'hint'  => 'No work_owners rows yet',
+                'kpi'   => 'noowner',
+                'kpi_href' => site_url('works'),
             ],
         ];
 
-        if (AuditLogModel::schemaReady()) {
-            $stats[] = [
+        if ($auditFeedLive) {
+            $extraStats[] = [
                 'label' => 'Audit events today',
                 'value' => (string) $auditTodayCount,
-                'hint'  => 'Actions recorded in the audit log since midnight',
+                'hint'  => 'Since midnight (all users)',
                 'kpi'   => 'audit_today',
                 'kpi_href' => site_url('activities'),
             ];
-            $stats[] = [
+            $extraStats[] = [
                 'label' => 'Most active users today',
                 'value' => $auditTopLabel,
-                'hint'  => 'By audit event count (top three names shown)',
+                'hint'  => 'Top three by audit count',
                 'kpi'   => 'audit_top',
                 'kpi_href' => site_url('activities'),
             ];
@@ -369,15 +472,23 @@ class Dashboard extends BaseController
 
         return $this->layout('dashboard/index', [
             'pageTitle'             => 'Dashboard',
-            'stats'                 => $stats,
+            'stats'                 => $primaryStats,
+            'extraStats'            => $extraStats,
             'useCharts'             => true,
             'chartPayload'          => $chartPayload,
             'activity'              => $activityFeed,
-            'auditFeedLive'         => AuditLogModel::schemaReady(),
+            'auditFeedLive'         => $auditFeedLive,
             'pinnedWorks'           => $pinnedWorks,
             'recentUsageDetections' => $recentUsageDetections,
             'caseStatusBreakdown'   => $casesByStatus,
             'casesSchemaOk'         => $casesSchemaOk,
+            'dashboardRangeDays'    => $rangeDays,
+            'dashboardWorkType'     => $workType,
+            'dashboardWorkTypes'    => $types,
+            'dashboardUrl'          => $dashboardUrl,
+            'topLicensedWorks'      => $topLicensedWorks,
+            'topLicensees'          => $topLicensees,
+            'topReportedWorks'      => $topReportedWorks,
         ]);
     }
 }

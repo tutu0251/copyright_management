@@ -1,0 +1,173 @@
+You are a senior CodeIgniter 4 engineer.
+
+I am building a **Copyright Management System**.
+
+## Current Progress
+
+* Step 1: Authentication + database ✔
+* Step 2: Asset Registry ✔
+* Step 3: Ownership ✔
+* Step 4: License Management ✔
+* Step 5: Usage Reports ✔
+* Step 6: Infringement Cases ✔
+* Step 7: Audit Logs ✔
+
+The mockup UI exists separately and must NOT be modified.
+All real implementation must be separate from mockup.
+
+---
+
+## Now implement Step 8: Advanced Dashboard + Analytics
+
+### 🎯 Goal
+
+Upgrade the dashboard into a **data-driven analytics system** using real database data.
+
+---
+
+## 📊 Features
+
+### 1. KPI Metrics (real data)
+
+Show:
+
+* total works
+* total owners
+* total licenses
+* active licenses
+* expiring licenses (next 30 days)
+* total revenue
+* unpaid license amount
+* total usage reports
+* infringement count
+* open cases
+* resolved cases
+
+---
+
+### 2. Charts (REAL DATA)
+
+Use **Chart.js (CDN)**
+
+#### Works Growth
+
+* monthly new works
+
+#### License Activity
+
+* active vs expired per month
+
+#### Revenue Trend
+
+* monthly revenue (sum of fees)
+
+#### Infringement Trend
+
+* detected vs resolved cases over time
+
+---
+
+### 3. Activity Feed
+
+Show last 10–20 actions from `audit_logs`:
+
+* user
+* action
+* entity
+* timestamp
+
+---
+
+### 4. Top Lists
+
+Add:
+
+* top works by number of licenses
+* most active licensees
+* most reported works (usage reports)
+
+---
+
+### 5. Filters
+
+Add dashboard filters:
+
+* date range (last 7 days / 30 days / 90 days)
+* optional: by work type
+
+---
+
+### 6. Query Optimization
+
+* use grouped queries
+* use indexes where needed
+* avoid N+1 queries
+
+---
+
+## 🧠 Controller
+
+Update or create:
+
+```text id="glffkh"
+main/Controllers/Dashboard.php
+```
+
+Responsibilities:
+
+* fetch aggregated data
+* prepare chart datasets
+* pass structured data to view
+
+---
+
+## 🧩 Model Updates
+
+Extend models to support:
+
+* grouped counts
+* sum calculations
+* date-based queries
+
+---
+
+## 🖥️ View
+
+Update:
+
+```text id="1p5u1s"
+main/Views/dashboard/index.php
+```
+
+Add:
+
+* KPI cards
+* Chart.js graphs
+* activity feed
+* top lists
+
+---
+
+## ⚠️ Constraints
+
+* Do NOT modify mockup files
+* Use real DB data only (no static arrays)
+* Keep clean separation (Controller → View)
+* Use Chart.js via CDN
+* Sanitize output
+* Maintain performance
+
+---
+
+## 🚀 Output
+
+Generate:
+
+* updated controller
+* model query methods
+* dashboard view with charts
+* JS code for Chart.js integration
+
+---
+
+Start Step 8 now.

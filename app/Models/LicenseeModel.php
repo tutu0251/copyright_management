@@ -75,4 +75,41 @@ class LicenseeModel extends Model
             default                 => 'Individual',
         };
     }
+
+    /**
+     * Licensees with the most licenses created in the period (join works for optional work type).
+     *
+     * @return list<array{licensee_id: int, name: string, license_count: int}>
+     */
+    public function topByNewLicensesSince(string $createdSince, int $limit, ?string $workType = null): array
+    {
+        $limit = max(1, min(50, $limit));
+        $lic   = $this->db->prefixTable('licenses');
+        $le    = $this->db->prefixTable('licensees');
+        $wt    = $this->db->prefixTable('works');
+
+        $sql  = "SELECT le.id AS licensee_id, le.name, COUNT(lic.id) AS license_count
+            FROM `{$lic}` lic
+            INNER JOIN `{$le}` le ON le.id = lic.licensee_id AND le.deleted_at IS NULL
+            INNER JOIN `{$wt}` w ON w.id = lic.work_id AND w.deleted_at IS NULL
+            WHERE lic.deleted_at IS NULL AND lic.created_at >= ?";
+        $bind = [$createdSince];
+        if ($workType !== null && $workType !== '') {
+            $sql .= ' AND w.work_type = ?';
+            $bind[] = $workType;
+        }
+        $sql .= ' GROUP BY le.id, le.name ORDER BY license_count DESC, le.id DESC LIMIT ' . $limit;
+
+        $rows = $this->db->query($sql, $bind)->getResultArray();
+        $out  = [];
+        foreach ($rows as $r) {
+            $out[] = [
+                'licensee_id'   => (int) ($r['licensee_id'] ?? 0),
+                'name'          => (string) ($r['name'] ?? ''),
+                'license_count' => (int) ($r['license_count'] ?? 0),
+            ];
+        }
+
+        return $out;
+    }
 }

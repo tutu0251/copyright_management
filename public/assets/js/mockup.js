@@ -140,6 +140,7 @@
         var labels = payload.labels || [];
         var reg = payload.registeredWorks || [];
         var lic = payload.activeLicenses || [];
+        var licExp = payload.expiredLicenses;
         var inf = payload.infringement || {};
         var infDet = inf.detected || [];
         var infRes = inf.resolved || [];
@@ -201,20 +202,42 @@
             },
         });
 
+        var licDatasets =
+            Array.isArray(licExp) && licExp.length === lic.length
+                ? [
+                      {
+                          label: 'Active (end of month)',
+                          data: lic,
+                          backgroundColor: 'rgba(52, 211, 153, 0.55)',
+                          borderColor: 'rgba(52, 211, 153, 0.95)',
+                          borderWidth: 1,
+                          borderRadius: 8,
+                      },
+                      {
+                          label: 'Expired in month',
+                          data: licExp,
+                          backgroundColor: 'rgba(248, 113, 113, 0.45)',
+                          borderColor: 'rgba(248, 113, 113, 0.9)',
+                          borderWidth: 1,
+                          borderRadius: 8,
+                      },
+                  ]
+                : [
+                      {
+                          label: 'Active licenses',
+                          data: lic,
+                          backgroundColor: 'rgba(52, 211, 153, 0.55)',
+                          borderColor: 'rgba(52, 211, 153, 0.95)',
+                          borderWidth: 1,
+                          borderRadius: 8,
+                      },
+                  ];
+
         pushChart('chartLicenseActivity', {
             type: 'bar',
             data: {
                 labels: labels,
-                datasets: [
-                    {
-                        label: 'Active licenses',
-                        data: lic,
-                        backgroundColor: 'rgba(52, 211, 153, 0.55)',
-                        borderColor: 'rgba(52, 211, 153, 0.95)',
-                        borderWidth: 1,
-                        borderRadius: 8,
-                    },
-                ],
+                datasets: licDatasets,
             },
             options: {
                 ...common,

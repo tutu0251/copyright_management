@@ -172,4 +172,64 @@ class WorkModel extends Model
 
         return $row ?: null;
     }
+
+    /**
+     * Distinct work_type values for filters (non-deleted works only).
+     *
+     * @return list<string>
+     */
+    public function distinctWorkTypes(): array
+    {
+        $rows = $this->builder()
+            ->select('work_type')
+            ->where('deleted_at', null)
+            ->where('work_type !=', '')
+            ->groupBy('work_type')
+            ->orderBy('work_type', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        $out = [];
+        foreach ($rows as $r) {
+            $t = trim((string) ($r['work_type'] ?? ''));
+            if ($t !== '') {
+                $out[] = $t;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * New works per calendar month (by created_at), from first day of (monthsBack-1) ago through now.
+     *
+     * @return array<string, int> keys 'Y-m' => count
+     */
+    public function countNewWorksByMonth(int $monthsBack, ?string $workType = null): array
+    {
+        $monthsBack = max(1, min(24, $monthsBack));
+        $start      = date('Y-m-01 00:00:00', strtotime('-' . ($monthsBack - 1) . ' months'));
+
+        $b = $this->builder()
+            ->select("DATE_FORMAT(created_at, '%Y-%m') AS ym", false)
+            ->select('COUNT(*) AS c', false)
+            ->where('deleted_at', null)
+            ->where('created_at >=', $start);
+
+        if ($workType !== null && $workType !== '') {
+            $b->where('work_type', $workType);
+        }
+
+        $rows = $b->groupBy('ym')->orderBy('ym', 'ASC')->get()->getResultArray();
+
+        $map = [];
+        foreach ($rows as $r) {
+            $ym = (string) ($r['ym'] ?? '');
+            if ($ym !== '') {
+                $map[$ym] = (int) ($r['c'] ?? 0);
+            }
+        }
+
+        return $map;
+    }
 }

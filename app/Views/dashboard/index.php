@@ -1,5 +1,40 @@
-<p class="page-intro">Portfolio health and licensing signals from your catalog; trend charts use illustrative series until reporting aggregates are wired.</p>
+<?php
+$dashboardUrl       = $dashboardUrl ?? site_url('dashboard');
+$dashboardRangeDays = (int) ($dashboardRangeDays ?? 30);
+$dashboardWorkType  = (string) ($dashboardWorkType ?? '');
+$dashboardWorkTypes = $dashboardWorkTypes ?? [];
+$extraStats         = $extraStats ?? [];
+$topLicensedWorks   = $topLicensedWorks ?? [];
+$topLicensees       = $topLicensees ?? [];
+$topReportedWorks   = $topReportedWorks ?? [];
+?>
 
+<p class="page-intro">Analytics from your live catalog: KPIs reflect portfolio totals; charts use the last <?= (int) (count(($chartPayload ?? [])['labels'] ?? []) ?: 12) ?> calendar months. Filters narrow lists, recent activity, usage highlights, and chart series tied to works.</p>
+
+<form class="dashboard-filters" method="get" action="<?= esc($dashboardUrl, 'attr') ?>" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:flex-end;margin-bottom:1.25rem;">
+    <div>
+        <label for="dash-range" class="muted" style="display:block;font-size:0.8rem;margin-bottom:0.25rem;">Date range</label>
+        <select id="dash-range" name="range" class="input-like" style="min-width:11rem;padding:0.45rem 0.6rem;border-radius:8px;border:1px solid var(--border, #334155);background:var(--surface, #0f172a);color:inherit;">
+            <option value="7" <?= $dashboardRangeDays === 7 ? 'selected' : '' ?>>Last 7 days</option>
+            <option value="30" <?= $dashboardRangeDays === 30 ? 'selected' : '' ?>>Last 30 days</option>
+            <option value="90" <?= $dashboardRangeDays === 90 ? 'selected' : '' ?>>Last 90 days</option>
+        </select>
+    </div>
+    <?php if ($dashboardWorkTypes !== []) : ?>
+        <div>
+            <label for="dash-work-type" class="muted" style="display:block;font-size:0.8rem;margin-bottom:0.25rem;">Work type</label>
+            <select id="dash-work-type" name="work_type" class="input-like" style="min-width:12rem;padding:0.45rem 0.6rem;border-radius:8px;border:1px solid var(--border, #334155);background:var(--surface, #0f172a);color:inherit;">
+                <option value="">All types</option>
+                <?php foreach ($dashboardWorkTypes as $wt) : ?>
+                    <option value="<?= esc($wt, 'attr') ?>" <?= $dashboardWorkType === $wt ? 'selected' : '' ?>><?= esc($wt) ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+    <?php endif; ?>
+    <button type="submit" class="btn btn--secondary btn--sm">Apply</button>
+</form>
+
+<h2 class="card__title" style="margin:0 0 0.5rem;font-size:1rem;">Key metrics</h2>
 <div class="grid grid--stats">
     <?php foreach ($stats as $s) : ?>
         <?php
@@ -14,31 +49,48 @@
     <?php endforeach; ?>
 </div>
 
-<div class="chart-grid">
+<?php if ($extraStats !== []) : ?>
+    <h2 class="card__title" style="margin:1.25rem 0 0.5rem;font-size:1rem;">More signals</h2>
+    <div class="grid grid--stats">
+        <?php foreach ($extraStats as $s) : ?>
+            <?php
+            echo view('components/cards', [
+                'kpi_label' => $s['label'],
+                'kpi_value' => $s['value'],
+                'kpi_hint'  => $s['hint'],
+                'kpi_key'   => $s['kpi'] ?? 'default',
+                'kpi_href'  => $s['kpi_href'] ?? null,
+            ]);
+            ?>
+        <?php endforeach; ?>
+    </div>
+<?php endif; ?>
+
+<div class="chart-grid" style="margin-top:1.25rem;">
     <div class="card chart-card">
         <h2 class="card__title">Works growth</h2>
-        <p class="chart-card__hint">New registrations per month (sample series).</p>
+        <p class="chart-card__hint">New works per month (by created_at<?= $dashboardWorkType !== '' ? ', filtered type' : '' ?>).</p>
         <div class="chart-canvas-wrap">
             <canvas id="chartWorksGrowth" height="220" aria-label="Works growth chart" role="img"></canvas>
         </div>
     </div>
     <div class="card chart-card">
         <h2 class="card__title">License activity</h2>
-        <p class="chart-card__hint">End-of-month active license count (sample).</p>
+        <p class="chart-card__hint">Active in force on month-end vs licenses whose end date falls in that month.</p>
         <div class="chart-canvas-wrap">
             <canvas id="chartLicenseActivity" height="220" aria-label="License activity chart" role="img"></canvas>
         </div>
     </div>
     <div class="card chart-card">
         <h2 class="card__title">Infringement trend</h2>
-        <p class="chart-card__hint">Detected vs resolved cases (sample).</p>
+        <p class="chart-card__hint">Cases opened per month vs resolved per month.</p>
         <div class="chart-canvas-wrap">
             <canvas id="chartInfringement" height="220" aria-label="Infringement trend chart" role="img"></canvas>
         </div>
     </div>
     <div class="card chart-card">
         <h2 class="card__title">Revenue trend</h2>
-        <p class="chart-card__hint">Reported license revenue in USD (sample).</p>
+        <p class="chart-card__hint">Paid license fees summed by month of license creation<?= $dashboardWorkType !== '' ? ' (filtered work type)' : '' ?>.</p>
         <div class="chart-canvas-wrap">
             <canvas id="chartRevenue" height="220" aria-label="Revenue trend chart" role="img"></canvas>
         </div>
@@ -50,32 +102,40 @@
         <h2 class="card__title">Activity feed</h2>
         <?php $auditFeedLive = $auditFeedLive ?? false; ?>
         <?php if ($auditFeedLive) : ?>
-            <p class="muted" style="margin: 0 0 0.75rem; font-size: 0.9rem;">Latest entries from the system audit log. <a href="<?= site_url('activities') ?>">View all</a></p>
-        <?php else : ?>
-            <p class="muted" style="margin: 0 0 0.75rem; font-size: 0.9rem;">Illustrative activity until the audit log migration is applied.</p>
-        <?php endif; ?>
-        <div class="activity-feed">
-            <?php if (($activity ?? []) === []) : ?>
-                <p class="muted" style="margin: 0;">No audit activity recorded yet.</p>
-            <?php endif; ?>
-            <?php foreach ($activity as $row) : ?>
-                <?php
-                $type = preg_replace('/[^a-z]/i', '', (string) ($row['type'] ?? 'work'));
-                $dotClass = 'activity-item__dot--' . ($type !== '' ? strtolower($type) : 'work');
-                ?>
-                <div class="activity-item">
-                    <span class="activity-item__dot <?= esc($dotClass, 'attr') ?>" aria-hidden="true"></span>
-                    <div class="activity-item__meta">
-                        <div class="activity-item__time"><?= esc($row['time']) ?></div>
-                        <div class="activity-item__text"><?= esc($row['text']) ?></div>
-                    </div>
+            <p class="muted" style="margin: 0 0 0.75rem; font-size: 0.9rem;">Latest audit events in the selected range. <a href="<?= site_url('activities') ?>">View all</a></p>
+            <?php if (($activity ?? []) !== []) : ?>
+                <div class="table-wrap table-wrap--flush">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>When</th>
+                                <th>User</th>
+                                <th>Action</th>
+                                <th>Entity</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($activity as $row) : ?>
+                                <tr>
+                                    <td class="muted" style="white-space:nowrap;"><?= esc((string) ($row['time'] ?? '')) ?></td>
+                                    <td><?= esc((string) ($row['actor'] ?? ($row['text'] ?? ''))) ?></td>
+                                    <td><?= esc((string) ($row['action'] ?? '')) ?></td>
+                                    <td><?= esc((string) ($row['entity'] ?? '')) ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
                 </div>
-            <?php endforeach; ?>
-        </div>
+            <?php else : ?>
+                <p class="muted" style="margin: 0;">No audit activity in this range.</p>
+            <?php endif; ?>
+        <?php else : ?>
+            <p class="muted" style="margin: 0 0 0.75rem; font-size: 0.9rem;">Audit log is not available until the migration is applied.</p>
+        <?php endif; ?>
     </div>
     <div class="card">
         <h2 class="card__title">Quick actions</h2>
-        <p class="muted" style="margin: 0 0 0.75rem;">Shortcuts open a modal shell — forms wire to the API later.</p>
+        <p class="muted" style="margin: 0 0 0.75rem;">Shortcuts for common tasks.</p>
         <div class="quick-actions">
             <a class="btn btn--primary" href="<?= site_url('works/create') ?>">Register work</a>
             <a class="btn btn--secondary" href="<?= site_url('licenses/create') ?>">Create license</a>
@@ -120,6 +180,90 @@
     </div>
 </div>
 
+<div class="grid grid--dashboard-mid" style="margin-top: 1.25rem;">
+    <div class="card">
+        <h2 class="card__title">Top works by licenses</h2>
+        <p class="muted" style="margin:0 0 0.75rem;font-size:0.9rem;">Licenses created in the selected range, grouped by work.</p>
+        <div class="table-wrap table-wrap--flush">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Work</th>
+                        <th>Licenses</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if ($topLicensedWorks === []) : ?>
+                        <tr><td colspan="2" class="muted">No data for this filter.</td></tr>
+                    <?php else : ?>
+                        <?php foreach ($topLicensedWorks as $tw) : ?>
+                            <?php $wid = (int) ($tw['work_id'] ?? 0); ?>
+                            <tr>
+                                <td><?php if ($wid > 0) : ?><a href="<?= site_url('works/' . $wid) ?>"><?= esc((string) ($tw['title'] ?? '')) ?></a><?php else : ?><?= esc((string) ($tw['title'] ?? '')) ?><?php endif; ?></td>
+                                <td><?= esc((string) (int) ($tw['license_count'] ?? 0)) ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card">
+        <h2 class="card__title">Most active licensees</h2>
+        <p class="muted" style="margin:0 0 0.75rem;font-size:0.9rem;">New licenses recorded in the selected range.</p>
+        <div class="table-wrap table-wrap--flush">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Licensee</th>
+                        <th>New licenses</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if ($topLicensees === []) : ?>
+                        <tr><td colspan="2" class="muted">No data for this filter.</td></tr>
+                    <?php else : ?>
+                        <?php foreach ($topLicensees as $tl) : ?>
+                            <?php $lid = (int) ($tl['licensee_id'] ?? 0); ?>
+                            <tr>
+                                <td><?php if ($lid > 0) : ?><a href="<?= site_url('licensees/' . $lid) ?>"><?= esc((string) ($tl['name'] ?? '')) ?></a><?php else : ?><?= esc((string) ($tl['name'] ?? '')) ?><?php endif; ?></td>
+                                <td><?= esc((string) (int) ($tl['license_count'] ?? 0)) ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card">
+        <h2 class="card__title">Most reported works</h2>
+        <p class="muted" style="margin:0 0 0.75rem;font-size:0.9rem;">Usage reports by detected date in the selected range.</p>
+        <div class="table-wrap table-wrap--flush">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Work</th>
+                        <th>Reports</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if ($topReportedWorks === []) : ?>
+                        <tr><td colspan="2" class="muted">No usage reports or no matches for this filter.</td></tr>
+                    <?php else : ?>
+                        <?php foreach ($topReportedWorks as $tr) : ?>
+                            <?php $rid = (int) ($tr['work_id'] ?? 0); ?>
+                            <tr>
+                                <td><?php if ($rid > 0) : ?><a href="<?= site_url('works/' . $rid) ?>"><?= esc((string) ($tr['title'] ?? '')) ?></a><?php else : ?><?= esc((string) ($tr['title'] ?? '')) ?><?php endif; ?></td>
+                                <td><?= esc((string) (int) ($tr['report_count'] ?? 0)) ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 <?php
 $recentUsageDetections = $recentUsageDetections ?? [];
 ?>
@@ -130,7 +274,7 @@ $casesSchemaOk = $casesSchemaOk ?? false;
 <?php if ($casesSchemaOk && $caseStatusBreakdown !== []) : ?>
     <div class="card" style="margin-top: 1.25rem;">
         <h2 class="card__title">Cases by status</h2>
-        <p class="muted" style="margin-top: 0;">Live counts from your infringement case registry (chart-ready payload is also in <code>chartPayload.caseStatusLabels</code> / <code>caseStatusValues</code>).</p>
+        <p class="muted" style="margin-top: 0;">Live counts from your infringement case registry.</p>
         <div class="table-wrap table-wrap--flush">
             <table class="data-table">
                 <thead>
@@ -164,8 +308,8 @@ $casesSchemaOk = $casesSchemaOk ?? false;
 
 <?php if ($recentUsageDetections !== []) : ?>
     <div class="card" style="margin-top: 1.25rem;">
-        <h2 class="card__title">Recent usage detections (7 days)</h2>
-        <p class="muted" style="margin-top: 0;">Latest manual monitoring entries across the catalog.</p>
+        <h2 class="card__title">Recent usage detections</h2>
+        <p class="muted" style="margin-top: 0;">Latest monitoring entries in the selected date range.</p>
         <div class="table-wrap table-wrap--flush">
             <table class="data-table">
                 <thead>

@@ -322,4 +322,77 @@ class InfringementCaseModel extends Model
             $this->update($caseId, ['closed_at' => null]);
         }
     }
+
+    /**
+     * Cases opened per calendar month (opened_at, else created_at).
+     *
+     * @return array<string, int> keys 'Y-m'
+     */
+    public function countOpenedByMonth(int $monthsBack): array
+    {
+        if (! self::schemaReady()) {
+            return [];
+        }
+
+        $monthsBack = max(1, min(24, $monthsBack));
+        $start       = date('Y-m-01 00:00:00', strtotime('-' . ($monthsBack - 1) . ' months'));
+        $ic          = $this->db->prefixTable('infringement_cases');
+
+        $rows = $this->db->query(
+            "SELECT DATE_FORMAT(COALESCE(ic.opened_at, ic.created_at), '%Y-%m') AS ym,
+                COUNT(*) AS c
+            FROM `{$ic}` ic
+            WHERE COALESCE(ic.opened_at, ic.created_at) >= ?
+            GROUP BY ym
+            ORDER BY ym ASC",
+            [$start],
+        )->getResultArray();
+
+        $map = [];
+        foreach ($rows as $r) {
+            $ym = (string) ($r['ym'] ?? '');
+            if ($ym !== '') {
+                $map[$ym] = (int) ($r['c'] ?? 0);
+            }
+        }
+
+        return $map;
+    }
+
+    /**
+     * Cases resolved per calendar month (closed_at, else updated_at when resolved).
+     *
+     * @return array<string, int> keys 'Y-m'
+     */
+    public function countResolvedByMonth(int $monthsBack): array
+    {
+        if (! self::schemaReady()) {
+            return [];
+        }
+
+        $monthsBack = max(1, min(24, $monthsBack));
+        $start       = date('Y-m-01 00:00:00', strtotime('-' . ($monthsBack - 1) . ' months'));
+        $ic          = $this->db->prefixTable('infringement_cases');
+
+        $rows = $this->db->query(
+            "SELECT DATE_FORMAT(COALESCE(ic.closed_at, ic.updated_at), '%Y-%m') AS ym,
+                COUNT(*) AS c
+            FROM `{$ic}` ic
+            WHERE ic.case_status = ?
+            AND COALESCE(ic.closed_at, ic.updated_at) >= ?
+            GROUP BY ym
+            ORDER BY ym ASC",
+            [self::STATUS_RESOLVED, $start],
+        )->getResultArray();
+
+        $map = [];
+        foreach ($rows as $r) {
+            $ym = (string) ($r['ym'] ?? '');
+            if ($ym !== '') {
+                $map[$ym] = (int) ($r['c'] ?? 0);
+            }
+        }
+
+        return $map;
+    }
 }

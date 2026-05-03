@@ -258,4 +258,128 @@ class LicenseModel extends Model
             ->get()
             ->getResultArray();
     }
+
+    /**
+     * Sum paid license fees grouped by month of license created_at.
+     *
+     * @return array<string, float> keys 'Y-m' => amount
+     */
+    public function sumPaidFeesByLicenseCreatedMonth(int $monthsBack, ?string $workType = null): array
+    {
+        $monthsBack = max(1, min(24, $monthsBack));
+        $start      = date('Y-m-01 00:00:00', strtotime('-' . ($monthsBack - 1) . ' months'));
+        $lic        = $this->db->prefixTable('licenses');
+        $wt         = $this->db->prefixTable('works');
+
+        $b = $this->builder()
+            ->select("DATE_FORMAT({$lic}.created_at, '%Y-%m') AS ym", false)
+            ->select("COALESCE(SUM({$lic}.fee_amount), 0) AS total_fee", false)
+            ->join("{$wt} w", "w.id = {$lic}.work_id", 'inner')
+            ->where("{$lic}.deleted_at", null)
+            ->where('w.deleted_at', null)
+            ->where("{$lic}.payment_status", self::PAYMENT_PAID)
+            ->where("{$lic}.created_at >=", $start);
+
+        if ($workType !== null && $workType !== '') {
+            $b->where('w.work_type', $workType);
+        }
+
+        $rows = $b->groupBy('ym')->orderBy('ym', 'ASC')->get()->getResultArray();
+
+        $map = [];
+        foreach ($rows as $r) {
+            $ym = (string) ($r['ym'] ?? '');
+            if ($ym !== '') {
+                $map[$ym] = (float) ($r['total_fee'] ?? 0);
+            }
+        }
+
+        return $map;
+    }
+
+    /**
+     * Per calendar month: licenses in force on last day of month vs ended before that day.
+     *
+     * @return array{active: list<int>, expired: list<int>}
+     */
+    public function monthlyActiveVsExpiredEndOfMonth(int $monthsBack, ?string $workType = null): array
+    {
+        $monthsBack = max(1, min(24, $monthsBack));
+        $lic        = $this->db->prefixTable('licenses');
+        $wt         = $this->db->prefixTable('works');
+
+        $workFilter = '';
+        $bind       = [];
+        if ($workType !== null && $workType !== '') {
+            $workFilter = " AND EXISTS (SELECT 1 FROM `{$wt}` w2 WHERE w2.id = lic.work_id AND w2.deleted_at IS NULL AND w2.work_type = ?)";
+            $bind[]     = $workType;
+        }
+
+        $active  = [];
+        $expired = [];
+        for ($i = $monthsBack - 1; $i >= 0; $i--) {
+            $first = date('Y-m-01', strtotime('-' . $i . ' months'));
+            $last  = date('Y-m-t', strtotime($first));
+
+            $sqlActive = "SELECT COUNT(*) AS c FROM `{$lic}` lic
+                WHERE lic.deleted_at IS NULL
+                AND lic.license_status NOT IN ('draft','cancelled')
+                AND (lic.start_date IS NULL OR lic.start_date <= ?)
+                AND (lic.end_date IS NULL OR lic.end_date >= ?)
+                {$workFilter}";
+            $bindA     = array_merge([$last, $last], $bind);
+            $rowA      = $this->db->query($sqlActive, $bindA)->getRowArray();
+            $active[]  = (int) ($rowA['c'] ?? 0);
+
+            $sqlExp = "SELECT COUNT(*) AS c FROM `{$lic}` lic
+                WHERE lic.deleted_at IS NULL
+                AND lic.license_status NOT IN ('draft','cancelled')
+                AND lic.end_date IS NOT NULL AND lic.end_date >= ? AND lic.end_date <= ?
+                {$workFilter}";
+            $bindE     = array_merge([$first, $last], $bind);
+            $rowE      = $this->db->query($sqlExp, $bindE)->getRowArray();
+            $expired[] = (int) ($rowE['c'] ?? 0);
+        }
+
+        return ['active' => $active, 'expired' => $expired];
+    }
+
+    /**
+     * Top works by number of licenses (optional work type and license created window).
+     *
+     * @return list<array{work_id: int, title: string, license_count: int}>
+     */
+    public function topLicensedWorks(int $limit, ?string $workType = null, ?string $licenseCreatedSince = null): array
+    {
+        $limit = max(1, min(50, $limit));
+        $wt    = $this->db->prefixTable('works');
+        $lic   = $this->db->prefixTable('licenses');
+
+        $sql  = "SELECT w.id AS work_id, w.title, COUNT(lic.id) AS license_count
+            FROM `{$lic}` lic
+            INNER JOIN `{$wt}` w ON w.id = lic.work_id AND w.deleted_at IS NULL
+            WHERE lic.deleted_at IS NULL";
+        $bind = [];
+        if ($workType !== null && $workType !== '') {
+            $sql .= ' AND w.work_type = ?';
+            $bind[] = $workType;
+        }
+        if ($licenseCreatedSince !== null && $licenseCreatedSince !== '') {
+            $sql .= ' AND lic.created_at >= ?';
+            $bind[] = $licenseCreatedSince;
+        }
+        $sql .= ' GROUP BY w.id, w.title ORDER BY license_count DESC, w.id DESC LIMIT ' . $limit;
+
+        $rows = $this->db->query($sql, $bind)->getResultArray();
+        $out  = [];
+        foreach ($rows as $r) {
+            $out[] = [
+                'work_id'       => (int) ($r['work_id'] ?? 0),
+                'title'         => (string) ($r['title'] ?? ''),
+                'license_count' => (int) ($r['license_count'] ?? 0),
+            ];
+        }
+
+        return $out;
+    }
 }

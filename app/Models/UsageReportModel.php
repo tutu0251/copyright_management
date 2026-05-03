@@ -270,4 +270,47 @@ class UsageReportModel extends Model
             ->get()
             ->getResultArray();
     }
+
+    /**
+     * Works with the most usage reports (optionally since detected_at and by work type).
+     *
+     * @return list<array{work_id: int, title: string, report_count: int}>
+     */
+    public function topWorksByReportCount(int $limit, ?string $detectedSince = null, ?string $workType = null): array
+    {
+        if (! self::monitoringSchemaReady()) {
+            return [];
+        }
+
+        $limit = max(1, min(50, $limit));
+        $ur    = $this->db->prefixTable('usage_reports');
+        $wt    = $this->db->prefixTable('works');
+
+        $sql  = "SELECT w.id AS work_id, w.title, COUNT(ur.id) AS report_count
+            FROM `{$ur}` ur
+            INNER JOIN `{$wt}` w ON w.id = ur.work_id AND w.deleted_at IS NULL
+            WHERE ur.deleted_at IS NULL";
+        $bind = [];
+        if ($detectedSince !== null && $detectedSince !== '') {
+            $sql .= ' AND ur.detected_at >= ?';
+            $bind[] = $detectedSince;
+        }
+        if ($workType !== null && $workType !== '') {
+            $sql .= ' AND w.work_type = ?';
+            $bind[] = $workType;
+        }
+        $sql .= ' GROUP BY w.id, w.title ORDER BY report_count DESC, w.id DESC LIMIT ' . $limit;
+
+        $rows = $this->db->query($sql, $bind)->getResultArray();
+        $out  = [];
+        foreach ($rows as $r) {
+            $out[] = [
+                'work_id'      => (int) ($r['work_id'] ?? 0),
+                'title'        => (string) ($r['title'] ?? ''),
+                'report_count' => (int) ($r['report_count'] ?? 0),
+            ];
+        }
+
+        return $out;
+    }
 }
