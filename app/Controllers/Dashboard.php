@@ -25,6 +25,7 @@ class Dashboard extends BaseController
             'nav'             => [
                 ['id' => 'dashboard', 'label' => 'Dashboard', 'path' => 'dashboard'],
                 ['id' => 'assets', 'label' => 'Assets', 'path' => 'works'],
+                ['id' => 'owners', 'label' => 'Owners', 'path' => 'owners'],
                 ['id' => 'licenses', 'label' => 'Licenses', 'path' => 'mockup/licenses'],
                 ['id' => 'monitoring', 'label' => 'Monitoring', 'path' => 'mockup/monitoring'],
                 ['id' => 'cases', 'label' => 'Cases', 'path' => 'mockup/cases'],
@@ -57,6 +58,40 @@ class Dashboard extends BaseController
 
         $worksCount = (int) $workModel->countAllResults();
 
+        $ownersCount         = 0;
+        $worksMultiOwners    = 0;
+        $worksWithoutOwner   = 0;
+
+        if ($db->tableExists('owners')) {
+            $ownersCount = $db->fieldExists('deleted_at', 'owners')
+                ? $db->table('owners')->where('deleted_at', null)->countAllResults()
+                : $db->table('owners')->countAllResults();
+        }
+
+        if ($db->tableExists('work_owners')) {
+            $woTable = $db->prefixTable('work_owners');
+            $wTable  = $db->prefixTable('works');
+            $multiRow = $db->query(
+                "SELECT COUNT(*) AS c FROM (
+                    SELECT wo.work_id FROM `{$woTable}` wo
+                    INNER JOIN `{$wTable}` w ON w.id = wo.work_id AND w.deleted_at IS NULL
+                    WHERE wo.deleted_at IS NULL
+                    GROUP BY wo.work_id HAVING COUNT(wo.id) > 1
+                ) t",
+            )->getRowArray();
+            $worksMultiOwners = (int) ($multiRow['c'] ?? 0);
+
+            $noOwnerRow = $db->query(
+                "SELECT COUNT(*) AS c FROM `{$wTable}` w
+                WHERE w.deleted_at IS NULL
+                AND NOT EXISTS (
+                    SELECT 1 FROM `{$woTable}` wo
+                    WHERE wo.work_id = w.id AND wo.deleted_at IS NULL
+                )",
+            )->getRowArray();
+            $worksWithoutOwner = (int) ($noOwnerRow['c'] ?? 0);
+        }
+
         $pinnedRows = $workModel
             ->select('id, title, copyright_status')
             ->orderBy('updated_at', 'DESC')
@@ -88,6 +123,27 @@ class Dashboard extends BaseController
                 'value' => (string) $worksCount,
                 'hint'  => 'Assets in your catalog',
                 'kpi'   => 'works',
+                'kpi_href' => site_url('works'),
+            ],
+            [
+                'label' => 'Owners in registry',
+                'value' => (string) $ownersCount,
+                'hint'  => 'Parties you can link to assets',
+                'kpi'   => 'owners',
+                'kpi_href' => site_url('owners'),
+            ],
+            [
+                'label' => 'Works with multiple owners',
+                'value' => (string) $worksMultiOwners,
+                'hint'  => 'Assets with more than one linked owner',
+                'kpi'   => 'multi',
+                'kpi_href' => site_url('works'),
+            ],
+            [
+                'label' => 'Works without owner link',
+                'value' => (string) $worksWithoutOwner,
+                'hint'  => 'No rows in work ownership yet',
+                'kpi'   => 'noowner',
                 'kpi_href' => site_url('works'),
             ],
             [

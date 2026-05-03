@@ -142,10 +142,13 @@ $flashWarning = $flashWarning ?? null;
 
     <div class="ui-tabs__panel" data-tab-panel="ownership" role="tabpanel">
         <div class="card">
-            <h2 class="card__title">Ownership splits</h2>
+            <h2 class="card__title">Ownership</h2>
+            <p class="muted" style="margin-top: 0;">Linked parties, roles, and percentages for this work.</p>
+            <div style="margin-bottom: 0.75rem;">
+                <a class="btn btn--primary btn--sm" href="<?= site_url('works/' . $wid . '/owners') ?>">Add / manage owners</a>
+            </div>
             <?php if ($ownershipRows === []) : ?>
-                <p class="muted">No fractional ownership rows for this asset.</p>
-                <a class="btn btn--ghost btn--sm" href="<?= site_url('mockup/ownership') ?>">Open global ownership table (mock)</a>
+                <p class="muted">No owners linked yet. Use <strong>Add / manage owners</strong> to attach parties from the registry.</p>
             <?php else : ?>
                 <?= $this->include('components/table') ?>
                 <table class="data-table">
@@ -153,15 +156,37 @@ $flashWarning = $flashWarning ?? null;
                         <tr>
                             <th>Owner</th>
                             <th>Share</th>
+                            <th>Role</th>
+                            <th>Status</th>
                             <th>Since</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php foreach ($ownershipRows as $r) : ?>
+                            <?php
+                            $oid = (int) ($r['owner_id'] ?? 0);
+                            $piv = (int) ($r['work_owner_id'] ?? 0);
+                            ?>
                             <tr>
-                                <td><?= esc($r['owner']) ?></td>
+                                <td>
+                                    <?php if ($oid > 0) : ?>
+                                        <a href="<?= site_url('owners/' . $oid) ?>"><?= esc($r['owner']) ?></a>
+                                    <?php else : ?>
+                                        <?= esc($r['owner']) ?>
+                                    <?php endif; ?>
+                                </td>
                                 <td><?= esc($r['share']) ?></td>
+                                <td><?= esc($r['role'] ?? '—') ?></td>
+                                <td><?= esc($r['status'] ?? '—') ?></td>
                                 <td><?= esc($r['since']) ?></td>
+                                <td class="table-actions">
+                                    <?php if ($piv > 0) : ?>
+                                        <?= form_open(site_url('works/' . $wid . '/owners/' . $piv . '/delete'), ['style' => 'display:inline;', 'onsubmit' => "return confirm('Unlink this owner from the work?');"]) ?>
+                                            <button type="submit" class="btn btn--ghost btn--sm">Unlink</button>
+                                        <?= form_close() ?>
+                                    <?php endif; ?>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>

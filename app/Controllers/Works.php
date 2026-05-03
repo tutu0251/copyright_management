@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Models\WorkFileModel;
 use App\Models\WorkModel;
+use App\Models\WorkOwnerModel;
 use CodeIgniter\Exceptions\PageNotFoundException;
 use CodeIgniter\HTTP\Files\UploadedFile;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -39,6 +40,7 @@ class Works extends BaseController
             'nav'             => [
                 ['id' => 'dashboard', 'label' => 'Dashboard', 'path' => 'dashboard'],
                 ['id' => 'assets', 'label' => 'Assets', 'path' => 'works'],
+                ['id' => 'owners', 'label' => 'Owners', 'path' => 'owners'],
                 ['id' => 'licenses', 'label' => 'Licenses', 'path' => 'mockup/licenses'],
                 ['id' => 'monitoring', 'label' => 'Monitoring', 'path' => 'mockup/monitoring'],
                 ['id' => 'cases', 'label' => 'Cases', 'path' => 'mockup/cases'],
@@ -417,14 +419,21 @@ class Works extends BaseController
             ];
         }
 
-        $ownRows = $db->table('owners')->where('work_id', $workId)->orderBy('id', 'ASC')->get()->getResultArray();
-        $ownershipRows = [];
+        $workOwnerModel = model(WorkOwnerModel::class);
+        $ownRows         = $workOwnerModel->forWorkWithOwners($workId);
+        $ownershipRows   = [];
         foreach ($ownRows as $o) {
+            $start   = $o['start_date'] ?? null;
             $created = $o['created_at'] ?? null;
+            $since   = $start ? (string) $start : ($created ? date('Y-m-d', strtotime((string) $created)) : '—');
             $ownershipRows[] = [
-                'owner' => (string) $o['legal_name'],
-                'share' => '—',
-                'since' => $created ? date('Y-m-d', strtotime((string) $created)) : '—',
+                'work_owner_id' => (string) ($o['id'] ?? ''),
+                'owner_id'      => (string) ($o['owner_id'] ?? ''),
+                'owner'         => (string) ($o['owner_name'] ?? ''),
+                'share'         => number_format((float) ($o['ownership_percentage'] ?? 0), 2) . '%',
+                'role'          => WorkOwnerModel::roleLabel((string) ($o['ownership_role'] ?? '')),
+                'status'        => WorkOwnerModel::statusLabel((string) ($o['status'] ?? '')),
+                'since'         => $since,
             ];
         }
 

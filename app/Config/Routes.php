@@ -19,6 +19,18 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
     $routes->get('dashboard', 'Dashboard::index');
     $routes->post('logout', 'Auth::logout');
 
+    $routes->get('owners', 'Owners::index');
+    $routes->get('owners/create', 'Owners::create');
+    $routes->post('owners', 'Owners::store');
+    $routes->get('owners/(:num)', 'Owners::show/$1');
+    $routes->get('owners/(:num)/edit', 'Owners::edit/$1');
+    $routes->post('owners/(:num)/update', 'Owners::update/$1');
+    $routes->post('owners/(:num)/delete', 'Owners::delete/$1');
+
+    $routes->get('works/(:num)/owners', 'WorkOwners::index/$1');
+    $routes->post('works/(:num)/owners', 'WorkOwners::store/$1');
+    $routes->post('works/(:num)/owners/(:num)/delete', 'WorkOwners::unlink/$1/$2');
+
     $routes->get('works', 'Works::index');
     $routes->get('works/create', 'Works::create');
     $routes->post('works', 'Works::store');
