@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Config\CopyrightMockData;
+use App\Models\LicenseModel;
 use App\Models\WorkModel;
 
 class Dashboard extends BaseController
@@ -26,7 +27,8 @@ class Dashboard extends BaseController
                 ['id' => 'dashboard', 'label' => 'Dashboard', 'path' => 'dashboard'],
                 ['id' => 'assets', 'label' => 'Assets', 'path' => 'works'],
                 ['id' => 'owners', 'label' => 'Owners', 'path' => 'owners'],
-                ['id' => 'licenses', 'label' => 'Licenses', 'path' => 'mockup/licenses'],
+                ['id' => 'licensees', 'label' => 'Licensees', 'path' => 'licensees'],
+                ['id' => 'licenses', 'label' => 'Licenses', 'path' => 'licenses'],
                 ['id' => 'monitoring', 'label' => 'Monitoring', 'path' => 'mockup/monitoring'],
                 ['id' => 'cases', 'label' => 'Cases', 'path' => 'mockup/cases'],
                 ['id' => 'reports', 'label' => 'Reports', 'path' => 'mockup/reports'],
@@ -49,7 +51,41 @@ class Dashboard extends BaseController
         $db        = db_connect();
         $workModel = model(WorkModel::class);
 
-        $activeLicenses = $db->table('licenses')->where('status', 'active')->countAllResults();
+        $licTable = $db->prefixTable('licenses');
+
+        $totalLicenses = $db->table('licenses')->where('deleted_at', null)->countAllResults();
+
+        $activeLicensesRow = $db->query(
+            "SELECT COUNT(*) AS c FROM `{$licTable}` lic
+            WHERE lic.deleted_at IS NULL
+            AND lic.license_status NOT IN ('draft','cancelled')
+            AND (lic.end_date IS NULL OR lic.end_date >= CURDATE())",
+        )->getRowArray();
+        $activeLicenses = (int) ($activeLicensesRow['c'] ?? 0);
+
+        $expiringRow = $db->query(
+            "SELECT COUNT(*) AS c FROM `{$licTable}` lic
+            WHERE lic.deleted_at IS NULL
+            AND lic.end_date IS NOT NULL
+            AND lic.end_date >= CURDATE()
+            AND lic.end_date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)
+            AND lic.license_status NOT IN ('draft','cancelled')",
+        )->getRowArray();
+        $expiringLicenses30 = (int) ($expiringRow['c'] ?? 0);
+
+        $revenueRow = $db->query(
+            "SELECT COALESCE(SUM(lic.fee_amount), 0) AS s FROM `{$licTable}` lic
+            WHERE lic.deleted_at IS NULL AND lic.payment_status = ?",
+            [LicenseModel::PAYMENT_PAID],
+        )->getRowArray();
+        $licenseRevenue = (float) ($revenueRow['s'] ?? 0);
+
+        $unpaidRow = $db->query(
+            "SELECT COALESCE(SUM(lic.fee_amount), 0) AS s FROM `{$licTable}` lic
+            WHERE lic.deleted_at IS NULL AND lic.payment_status IN (?, ?)",
+            [LicenseModel::PAYMENT_UNPAID, LicenseModel::PAYMENT_PARTIAL],
+        )->getRowArray();
+        $licenseUnpaid = (float) ($unpaidRow['s'] ?? 0);
         $openCases      = $db->table('infringement_cases')
             ->whereNotIn('status', ['closed', 'resolved'])
             ->countAllResults();
@@ -147,10 +183,39 @@ class Dashboard extends BaseController
                 'kpi_href' => site_url('works'),
             ],
             [
+                'label' => 'Total licenses',
+                'value' => (string) $totalLicenses,
+                'hint'  => 'All license records (excluding archived)',
+                'kpi'   => 'lic_total',
+                'kpi_href' => site_url('licenses'),
+            ],
+            [
                 'label' => 'Active licenses',
                 'value' => (string) $activeLicenses,
-                'hint'  => 'Agreements marked active',
-                'kpi'   => 'licenses',
+                'hint'  => 'In force (not draft/cancelled, not past end date)',
+                'kpi'   => 'lic_active',
+                'kpi_href' => site_url('licenses'),
+            ],
+            [
+                'label' => 'Expiring within 30 days',
+                'value' => (string) $expiringLicenses30,
+                'hint'  => 'End date in the next month (excluding draft/cancelled)',
+                'kpi'   => 'lic_exp',
+                'kpi_href' => site_url('licenses'),
+            ],
+            [
+                'label' => 'License revenue (paid)',
+                'value' => '$' . number_format($licenseRevenue, 2),
+                'hint'  => 'Sum of fee where payment is marked paid',
+                'kpi'   => 'lic_rev',
+                'kpi_href' => site_url('licenses'),
+            ],
+            [
+                'label' => 'Unpaid license fees',
+                'value' => '$' . number_format($licenseUnpaid, 2),
+                'hint'  => 'Sum of fee where payment is unpaid or partial',
+                'kpi'   => 'lic_unpaid',
+                'kpi_href' => site_url('licenses'),
             ],
             [
                 'label' => 'Open infringement cases',

@@ -138,7 +138,7 @@ class WorkModel extends Model
 
         $rowsBuilder = $this->builder();
         $rowsBuilder->select("{$wt}.*", false);
-        $rowsBuilder->select("(SELECT COUNT(*) FROM {$lt} lic WHERE lic.work_id = {$wt}.id) AS license_count", false);
+        $rowsBuilder->select("(SELECT COUNT(*) FROM {$lt} lic WHERE lic.work_id = {$wt}.id AND lic.deleted_at IS NULL) AS license_count", false);
         if ($search !== '') {
             $rowsBuilder->groupStart()
                 ->like($wt . '.title', $search)
@@ -165,7 +165,7 @@ class WorkModel extends Model
 
         $row = $this->builder()
             ->select("{$wt}.*", false)
-            ->select("(SELECT COUNT(*) FROM {$lt} lic WHERE lic.work_id = {$wt}.id) AS license_count", false)
+            ->select("(SELECT COUNT(*) FROM {$lt} lic WHERE lic.work_id = {$wt}.id AND lic.deleted_at IS NULL) AS license_count", false)
             ->where($wt . '.id', $id)
             ->get()
             ->getRowArray();

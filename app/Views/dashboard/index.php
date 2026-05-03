@@ -69,7 +69,7 @@
         <p class="muted" style="margin: 0 0 0.75rem;">Shortcuts open a modal shell — forms wire to the API later.</p>
         <div class="quick-actions">
             <a class="btn btn--primary" href="<?= site_url('works/create') ?>">Register work</a>
-            <button type="button" class="btn btn--secondary" data-open-modal="license">Create license</button>
+            <a class="btn btn--secondary" href="<?= site_url('licenses/create') ?>">Create license</a>
             <button type="button" class="btn btn--secondary" data-open-modal="usage">Report usage</button>
         </div>
         <h3 class="card__title" style="margin-top: 1.25rem;">Pinned assets</h3>

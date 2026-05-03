@@ -38,6 +38,22 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
     $routes->get('works/(:num)/edit', 'Works::edit/$1');
     $routes->post('works/(:num)/update', 'Works::update/$1');
     $routes->post('works/(:num)/delete', 'Works::delete/$1');
+
+    $routes->get('licensees', 'Licensees::index');
+    $routes->get('licensees/create', 'Licensees::create');
+    $routes->post('licensees', 'Licensees::store');
+    $routes->get('licensees/(:num)', 'Licensees::show/$1');
+    $routes->get('licensees/(:num)/edit', 'Licensees::edit/$1');
+    $routes->post('licensees/(:num)/update', 'Licensees::update/$1');
+    $routes->post('licensees/(:num)/delete', 'Licensees::delete/$1');
+
+    $routes->get('licenses', 'Licenses::index');
+    $routes->get('licenses/create', 'Licenses::create');
+    $routes->post('licenses', 'Licenses::store');
+    $routes->get('licenses/(:num)', 'Licenses::show/$1');
+    $routes->get('licenses/(:num)/edit', 'Licenses::edit/$1');
+    $routes->post('licenses/(:num)/update', 'Licenses::update/$1');
+    $routes->post('licenses/(:num)/delete', 'Licenses::delete/$1');
 });
 
 $routes->group('mockup', static function ($routes) {

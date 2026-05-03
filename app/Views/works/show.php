@@ -209,27 +209,35 @@ $flashWarning = $flashWarning ?? null;
                             <th>License</th>
                             <th>Licensee</th>
                             <th>Type</th>
+                            <th>Territory</th>
+                            <th>Start</th>
+                            <th>End</th>
+                            <th>Fee</th>
                             <th>Status</th>
-                            <th>Expires</th>
                             <th></th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php foreach ($workLicenses as $lic) : ?>
+                            <?php
+                            $licId = (int) ($lic['id'] ?? 0);
+                            $eff = (string) ($lic['eff'] ?? '');
+                            $ls = (string) ($lic['status'] ?? '');
+                            $tone = $eff === \App\Models\LicenseModel::STATUS_ACTIVE ? 'success' : ($eff === \App\Models\LicenseModel::STATUS_EXPIRING_SOON ? 'warning' : ($eff === \App\Models\LicenseModel::STATUS_EXPIRED ? 'danger' : 'neutral'));
+                            ?>
                             <tr>
-                                <td><?= esc($lic['id']) ?></td>
+                                <td>#<?= esc((string) $licId) ?></td>
                                 <td><?= esc($lic['licensee']) ?></td>
                                 <td><?= esc($lic['type']) ?></td>
-                                <td>
-                                    <?php
-                                    $ls = (string) ($lic['status'] ?? '');
-                                    $lt = strcasecmp($ls, 'Active') === 0 ? 'success' : (preg_match('/pending|expir/i', $ls) ? 'warning' : 'neutral');
-                                    echo view('components/badges', ['label' => $ls, 'tone' => $lt]);
-                                    ?>
-                                </td>
-                                <td><?= esc($lic['expires']) ?></td>
+                                <td><?= esc($lic['territory'] ?? '—') ?></td>
+                                <td><?= esc($lic['start_date'] ?? '—') ?></td>
+                                <td><?= esc($lic['end_date'] ?? '—') ?></td>
+                                <td><?= esc($lic['fee'] ?? '—') ?></td>
+                                <td><?= view('components/badges', ['label' => $ls, 'tone' => $tone]) ?></td>
                                 <td class="table-actions">
-                                    <a class="btn btn--ghost btn--sm" href="<?= site_url('mockup/license/' . $lic['id']) ?>">Open (mock)</a>
+                                    <?php if ($licId > 0) : ?>
+                                        <a class="btn btn--ghost btn--sm" href="<?= site_url('licenses/' . $licId) ?>">View</a>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -238,7 +246,8 @@ $flashWarning = $flashWarning ?? null;
                 <?= $this->include('components/table_end') ?>
             <?php endif; ?>
             <div style="margin-top: 0.75rem;">
-                <a class="btn btn--secondary btn--sm" href="<?= site_url('mockup/licenses') ?>">All licenses (mock)</a>
+                <a class="btn btn--primary btn--sm" href="<?= site_url('licenses/create?work_id=' . $wid) ?>">Create license</a>
+                <a class="btn btn--secondary btn--sm" href="<?= site_url('licenses') ?>">All licenses</a>
             </div>
         </div>
     </div>

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Models\LicenseModel;
 use App\Models\WorkFileModel;
 use App\Models\WorkModel;
 use App\Models\WorkOwnerModel;
@@ -41,7 +42,8 @@ class Works extends BaseController
                 ['id' => 'dashboard', 'label' => 'Dashboard', 'path' => 'dashboard'],
                 ['id' => 'assets', 'label' => 'Assets', 'path' => 'works'],
                 ['id' => 'owners', 'label' => 'Owners', 'path' => 'owners'],
-                ['id' => 'licenses', 'label' => 'Licenses', 'path' => 'mockup/licenses'],
+                ['id' => 'licensees', 'label' => 'Licensees', 'path' => 'licensees'],
+                ['id' => 'licenses', 'label' => 'Licenses', 'path' => 'licenses'],
                 ['id' => 'monitoring', 'label' => 'Monitoring', 'path' => 'mockup/monitoring'],
                 ['id' => 'cases', 'label' => 'Cases', 'path' => 'mockup/cases'],
                 ['id' => 'reports', 'label' => 'Reports', 'path' => 'mockup/reports'],
@@ -400,22 +402,24 @@ class Works extends BaseController
     {
         $db = db_connect();
 
-        $licRows = $db->table('licenses l')
-            ->select('l.id, l.status, l.ends_on, le.name AS licensee_name')
-            ->join('licensees le', 'le.id = l.licensee_id', 'left')
-            ->where('l.work_id', $workId)
-            ->get()
-            ->getResultArray();
+        $licRows = model(LicenseModel::class)->forWork($workId);
 
         $workLicenses = [];
         foreach ($licRows as $lr) {
-            $st = (string) ($lr['status'] ?? '');
+            $licId = (int) ($lr['id'] ?? 0);
+            $eff   = LicenseModel::effectiveStatus($lr);
+            $fee   = (float) ($lr['fee_amount'] ?? 0);
+            $cur   = (string) ($lr['currency'] ?? 'USD');
             $workLicenses[] = [
-                'id'        => 'LIC-' . $lr['id'],
-                'licensee'  => (string) ($lr['licensee_name'] ?? '—'),
-                'type'      => '—',
-                'status'    => $st !== '' ? ucfirst($st) : '—',
-                'expires'   => $lr['ends_on'] !== null ? (string) $lr['ends_on'] : '—',
+                'id'         => (string) $licId,
+                'licensee'   => (string) ($lr['licensee_name'] ?? '—'),
+                'type'       => LicenseModel::licenseTypeLabel((string) ($lr['license_type'] ?? '')),
+                'territory'  => (string) ($lr['territory'] ?? '—'),
+                'start_date' => $lr['start_date'] !== null && $lr['start_date'] !== '' ? (string) $lr['start_date'] : '—',
+                'end_date'   => $lr['end_date'] !== null && $lr['end_date'] !== '' ? (string) $lr['end_date'] : '—',
+                'fee'        => $cur . ' ' . number_format($fee, 2),
+                'status'     => LicenseModel::statusLabel($eff),
+                'eff'        => $eff,
             ];
         }
 
