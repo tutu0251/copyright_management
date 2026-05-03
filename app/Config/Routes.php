@@ -7,7 +7,17 @@ use CodeIgniter\Router\RouteCollection;
  */
 
 $routes->get('/', static function () {
-    return redirect()->to(site_url('mockup'));
+    return redirect()->to(site_url('dashboard'));
+});
+
+$routes->group('', ['filter' => 'guest'], static function ($routes) {
+    $routes->get('login', 'Auth::login');
+    $routes->post('login', 'Auth::attemptLogin');
+});
+
+$routes->group('', ['filter' => 'auth'], static function ($routes) {
+    $routes->get('dashboard', 'Dashboard::index');
+    $routes->post('logout', 'Auth::logout');
 });
 
 $routes->group('mockup', static function ($routes) {

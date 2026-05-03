@@ -16,9 +16,10 @@
             <span class="ui-theme-toggle__icon ui-theme-toggle__icon--sun" aria-hidden="true"></span>
             <span class="ui-theme-toggle__icon ui-theme-toggle__icon--moon" aria-hidden="true"></span>
         </button>
+        <?php $currentUser ??= ['name' => 'Guest', 'role' => '—']; ?>
         <div class="app-topbar__user">
-            <span class="app-user__avatar app-user__avatar--sm" aria-hidden="true"><?= esc(strtoupper(substr($mockUser['name'], 0, 1))) ?></span>
-            <span class="app-topbar__user-name"><?= esc($mockUser['name']) ?></span>
+            <span class="app-user__avatar app-user__avatar--sm" aria-hidden="true"><?= esc(strtoupper(substr((string) $currentUser['name'], 0, 1))) ?></span>
+            <span class="app-topbar__user-name"><?= esc($currentUser['name']) ?></span>
         </div>
     </div>
 </header>

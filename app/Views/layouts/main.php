@@ -27,7 +27,7 @@
             <?= $this->include('layouts/topbar') ?>
             <div class="app-page-head">
                 <h1 class="app-page-head__title"><?= esc($pageTitle) ?></h1>
-                <p class="app-page-head__crumb muted">Copyright Management · UI mockup</p>
+                <p class="app-page-head__crumb muted"><?= esc($appCrumb ?? 'Copyright Management') ?></p>
             </div>
             <main class="app-content" id="main-content">
                 <?= $content ?>

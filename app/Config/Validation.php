@@ -41,4 +41,12 @@ class Validation extends BaseConfig
     // --------------------------------------------------------------------
     // Rules
     // --------------------------------------------------------------------
+
+    /**
+     * @var array<string, string>
+     */
+    public array $login = [
+        'email'    => 'required|valid_email',
+        'password' => 'required',
+    ];
 }

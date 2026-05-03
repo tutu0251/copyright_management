@@ -6,6 +6,47 @@ use CodeIgniter\Config\BaseConfig;
 
 class App extends BaseConfig
 {
+    public function __construct()
+    {
+        parent::__construct();
+
+        if (is_cli()) {
+            return;
+        }
+
+        $envBase = isset($_ENV['app.baseURL']) ? trim((string) $_ENV['app.baseURL'], "'\" \t") : '';
+        if ($envBase !== '') {
+            return;
+        }
+
+        $inferred = $this->inferBaseURLFromRequest();
+        if ($inferred !== null && filter_var($inferred, FILTER_VALIDATE_URL) !== false) {
+            $this->baseURL = $inferred;
+        }
+    }
+
+    private function inferBaseURLFromRequest(): ?string
+    {
+        $host = $_SERVER['HTTP_HOST'] ?? '';
+        if ($host === '') {
+            return null;
+        }
+
+        $scriptName = str_replace('\\', '/', (string) ($_SERVER['SCRIPT_NAME'] ?? ''));
+        $scriptDir  = dirname($scriptName);
+        if ($scriptDir === '/' || $scriptDir === '\\' || $scriptDir === '.') {
+            $path = '/';
+        } else {
+            $path = rtrim($scriptDir, '/') . '/';
+        }
+
+        $https = (! empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+            || ((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https')
+            || ((int) ($_SERVER['SERVER_PORT'] ?? 80) === 443);
+
+        return ($https ? 'https' : 'http') . '://' . $host . $path;
+    }
+
     /**
      * --------------------------------------------------------------------------
      * Base Site URL

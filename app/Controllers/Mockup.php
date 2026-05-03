@@ -15,10 +15,17 @@ class Mockup extends BaseController
 
     private function render(string $view, array $data = []): string
     {
+        $mockUser = CopyrightMockData::mockUser();
+
         $defaults = [
             'pageTitle'    => 'Copyright Management',
             'currentPage'  => '',
-            'mockUser'     => CopyrightMockData::mockUser(),
+            'currentUser'  => [
+                'name' => $mockUser['name'],
+                'role' => $mockUser['role'],
+            ],
+            'useAuthLogout'=> false,
+            'appCrumb'     => 'Copyright Management · UI mockup',
             'useCharts'    => false,
             'chartPayload' => null,
             'permissions'  => [],
@@ -99,12 +106,31 @@ class Mockup extends BaseController
     public function workDetail(string $id): string
     {
         $work = CopyrightMockData::workById($id);
+        $wid  = null;
 
-        if ($work === null) {
+        if ($work !== null) {
+            $wid = (string) ($work['work_id'] ?? $work['id'] ?? '');
+        } elseif (ctype_digit($id)) {
+            $bundle = $this->loadWorkBundleFromDatabase((int) $id);
+            if ($bundle === null) {
+                throw PageNotFoundException::forPageNotFound();
+            }
+            $work           = $bundle['work'];
+            $workLicenses   = $bundle['workLicenses'];
+            $workUsageRows  = $bundle['workUsageRows'];
+            $ownershipRows  = $bundle['ownershipRows'];
+
+            return $this->render('work_detail', [
+                'pageTitle'     => $work['title'],
+                'currentPage'   => 'assets',
+                'work'          => $work,
+                'workLicenses'  => $workLicenses,
+                'workUsageRows' => $workUsageRows,
+                'ownershipRows' => $ownershipRows,
+            ]);
+        } else {
             throw PageNotFoundException::forPageNotFound();
         }
-
-        $wid = (string) ($work['work_id'] ?? $work['id'] ?? '');
 
         return $this->render('work_detail', [
             'pageTitle'      => $work['title'],
@@ -117,6 +143,103 @@ class Mockup extends BaseController
                 static fn ($r) => ($r['work_id'] ?? '') === $wid
             )),
         ]);
+    }
+
+    /**
+     * @return array{work: array<string, mixed>, workLicenses: list<array<string, string>>, workUsageRows: list<array<string, string>>, ownershipRows: list<array<string, string>>}|null
+     */
+    private function loadWorkBundleFromDatabase(int $workId): ?array
+    {
+        $db = db_connect();
+
+        $row = $db->table('works')->where('id', $workId)->get()->getRowArray();
+        if ($row === null) {
+            return null;
+        }
+
+        $reg = $row['registered_at'] ?? null;
+        $regDisp = $reg ? date('M j, Y', strtotime((string) $reg)) : '—';
+        $upd = $row['updated_at'] ?? null;
+        $updDisp = $upd ? date('M j, Y', strtotime((string) $upd)) : '—';
+
+        $ownerRow = $db->table('owners')->where('work_id', $workId)->orderBy('id', 'ASC')->get()->getRowArray();
+        $ownerName = $ownerRow !== null ? (string) $ownerRow['legal_name'] : '—';
+
+        $licenseCount = $db->table('licenses')->where('work_id', $workId)->countAllResults();
+
+        $licRows = $db->table('licenses l')
+            ->select('l.id, l.status, l.ends_on, le.name AS licensee_name')
+            ->join('licensees le', 'le.id = l.licensee_id', 'left')
+            ->where('l.work_id', $workId)
+            ->get()
+            ->getResultArray();
+
+        $workLicenses = [];
+        foreach ($licRows as $lr) {
+            $st = (string) ($lr['status'] ?? '');
+            $workLicenses[] = [
+                'id'        => 'LIC-' . $lr['id'],
+                'licensee'  => (string) ($lr['licensee_name'] ?? '—'),
+                'type'      => '—',
+                'status'    => $st !== '' ? ucfirst($st) : '—',
+                'expires'   => $lr['ends_on'] !== null ? (string) $lr['ends_on'] : '—',
+            ];
+        }
+
+        $ownRows = $db->table('owners')->where('work_id', $workId)->orderBy('id', 'ASC')->get()->getResultArray();
+        $ownershipRows = [];
+        foreach ($ownRows as $o) {
+            $created = $o['created_at'] ?? null;
+            $ownershipRows[] = [
+                'owner' => (string) $o['legal_name'],
+                'share' => '—',
+                'since' => $created ? date('Y-m-d', strtotime((string) $created)) : '—',
+            ];
+        }
+
+        $licenseIds = array_column($licRows, 'id');
+        $workUsageRows = [];
+        if ($licenseIds !== []) {
+            $usageDbRows = $db->table('usage_reports')
+                ->whereIn('license_id', $licenseIds)
+                ->orderBy('period_start', 'DESC')
+                ->get()
+                ->getResultArray();
+            foreach ($usageDbRows as $u) {
+                $rev = $u['revenue_amount'] ?? null;
+                $workUsageRows[] = [
+                    'period'       => ($u['period_start'] ?? '') . ' – ' . ($u['period_end'] ?? ''),
+                    'channel'      => '—',
+                    'impressions'  => $u['usage_units'] !== null ? (string) $u['usage_units'] : '—',
+                    'revenue'      => $rev !== null ? '$' . number_format((float) $rev, 2) : '—',
+                ];
+            }
+        }
+
+        $work = [
+            'work_id'             => (string) $workId,
+            'id'                  => (string) $workId,
+            'title'               => (string) $row['title'],
+            'type'                => '—',
+            'creator'             => '—',
+            'owner'               => $ownerName,
+            'copyright_status'    => (string) ($row['copyright_status'] ?? 'draft'),
+            'registration_date'   => $regDisp,
+            'territory'           => '—',
+            'license_count'       => $licenseCount,
+            'risk_level'          => 'Low',
+            'last_updated'        => $updDisp,
+            'description'         => 'Catalog record from the database. Rich metadata will expand as modules connect.',
+            'creators'            => [],
+            'identifiers'         => ['Work #' . $workId],
+        ];
+
+        return [
+            'work'           => $work,
+            'workLicenses'   => $workLicenses,
+            'workUsageRows'  => $workUsageRows,
+            'ownershipRows'  => $ownershipRows,
+        ];
     }
 
     public function ownership(): string
