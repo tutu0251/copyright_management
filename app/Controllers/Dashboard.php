@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Config\CopyrightMockData;
+use App\Models\WorkModel;
 
 class Dashboard extends BaseController
 {
@@ -23,7 +24,7 @@ class Dashboard extends BaseController
             ],
             'nav'             => [
                 ['id' => 'dashboard', 'label' => 'Dashboard', 'path' => 'dashboard'],
-                ['id' => 'assets', 'label' => 'Assets', 'path' => 'mockup/assets'],
+                ['id' => 'assets', 'label' => 'Assets', 'path' => 'works'],
                 ['id' => 'licenses', 'label' => 'Licenses', 'path' => 'mockup/licenses'],
                 ['id' => 'monitoring', 'label' => 'Monitoring', 'path' => 'mockup/monitoring'],
                 ['id' => 'cases', 'label' => 'Cases', 'path' => 'mockup/cases'],
@@ -44,7 +45,8 @@ class Dashboard extends BaseController
 
     public function index(): string
     {
-        $db = db_connect();
+        $db        = db_connect();
+        $workModel = model(WorkModel::class);
 
         $activeLicenses = $db->table('licenses')->where('status', 'active')->countAllResults();
         $openCases      = $db->table('infringement_cases')
@@ -53,13 +55,14 @@ class Dashboard extends BaseController
 
         $usageReportsCount = $db->table('usage_reports')->countAllResults();
 
-        $pinnedRows = $db->table('works')
+        $worksCount = (int) $workModel->countAllResults();
+
+        $pinnedRows = $workModel
             ->select('id, title, copyright_status')
             ->orderBy('updated_at', 'DESC')
             ->orderBy('id', 'DESC')
             ->limit(5)
-            ->get()
-            ->getResultArray();
+            ->findAll();
 
         $pinnedWorks = [];
         foreach ($pinnedRows as $row) {
@@ -82,9 +85,10 @@ class Dashboard extends BaseController
         $stats = [
             [
                 'label' => 'Registered works',
-                'value' => (string) $db->table('works')->countAllResults(),
+                'value' => (string) $worksCount,
                 'hint'  => 'Assets in your catalog',
                 'kpi'   => 'works',
+                'kpi_href' => site_url('works'),
             ],
             [
                 'label' => 'Active licenses',

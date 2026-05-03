@@ -8,6 +8,7 @@
             'kpi_value' => $s['value'],
             'kpi_hint'  => $s['hint'],
             'kpi_key'   => $s['kpi'] ?? 'default',
+            'kpi_href'  => $s['kpi_href'] ?? null,
         ]);
         ?>
     <?php endforeach; ?>
@@ -67,7 +68,7 @@
         <h2 class="card__title">Quick actions</h2>
         <p class="muted" style="margin: 0 0 0.75rem;">Shortcuts open a modal shell — forms wire to the API later.</p>
         <div class="quick-actions">
-            <button type="button" class="btn btn--primary" data-open-modal="register">Register work</button>
+            <a class="btn btn--primary" href="<?= site_url('works/create') ?>">Register work</a>
             <button type="button" class="btn btn--secondary" data-open-modal="license">Create license</button>
             <button type="button" class="btn btn--secondary" data-open-modal="usage">Report usage</button>
         </div>
@@ -89,7 +90,7 @@
                         <?php foreach ($pinnedWorks as $w) : ?>
                             <tr>
                                 <td>
-                                    <a href="<?= site_url('mockup/work/' . $w['work_id']) ?>"><?= esc($w['title']) ?></a>
+                                    <a href="<?= site_url('works/' . $w['work_id']) ?>"><?= esc($w['title']) ?></a>
                                 </td>
                                 <td>
                                     <?php
@@ -105,7 +106,7 @@
             </table>
         </div>
         <div style="margin-top: 0.85rem;">
-            <a class="btn btn--ghost btn--sm" href="<?= site_url('mockup/assets') ?>">Open assets</a>
+            <a class="btn btn--ghost btn--sm" href="<?= site_url('works') ?>">Open assets</a>
         </div>
     </div>
 </div>

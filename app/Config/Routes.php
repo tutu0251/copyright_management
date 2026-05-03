@@ -18,6 +18,14 @@ $routes->group('', ['filter' => 'guest'], static function ($routes) {
 $routes->group('', ['filter' => 'auth'], static function ($routes) {
     $routes->get('dashboard', 'Dashboard::index');
     $routes->post('logout', 'Auth::logout');
+
+    $routes->get('works', 'Works::index');
+    $routes->get('works/create', 'Works::create');
+    $routes->post('works', 'Works::store');
+    $routes->get('works/(:num)', 'Works::show/$1');
+    $routes->get('works/(:num)/edit', 'Works::edit/$1');
+    $routes->post('works/(:num)/update', 'Works::update/$1');
+    $routes->post('works/(:num)/delete', 'Works::delete/$1');
 });
 
 $routes->group('mockup', static function ($routes) {
