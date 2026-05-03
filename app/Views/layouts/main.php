@@ -19,6 +19,7 @@
 </head>
 <body class="app-body" data-page="<?= esc($currentPage ?? '', 'attr') ?>">
     <?php
+    helper('permission');
     // TODO: Inject authenticated user + org context from session / API.
     ?>
     <div class="app-shell">

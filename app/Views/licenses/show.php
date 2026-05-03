@@ -21,10 +21,14 @@ $cur = (string) ($license['currency'] ?? 'USD');
         <a class="btn btn--secondary btn--sm" href="<?= site_url('licenses') ?>">← Licenses</a>
     </div>
     <div class="toolbar__right">
-        <a class="btn btn--secondary" href="<?= site_url('licenses/' . $id . '/edit') ?>">Edit</a>
-        <?= form_open(site_url('licenses/' . $id . '/delete'), ['style' => 'display:inline;', 'onsubmit' => "return confirm('Archive this license?');"]) ?>
-            <button type="submit" class="btn btn--ghost">Archive</button>
-        <?= form_close() ?>
+        <?php if (user_can('licenses.update')) : ?>
+            <a class="btn btn--secondary" href="<?= site_url('licenses/' . $id . '/edit') ?>">Edit</a>
+        <?php endif; ?>
+        <?php if (user_can('licenses.delete')) : ?>
+            <?= form_open(site_url('licenses/' . $id . '/delete'), ['style' => 'display:inline;', 'onsubmit' => "return confirm('Archive this license?');"]) ?>
+                <button type="submit" class="btn btn--ghost">Archive</button>
+            <?= form_close() ?>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -77,9 +81,11 @@ $cur = (string) ($license['currency'] ?? 'USD');
     <div class="card">
         <h2 class="card__title">Record</h2>
         <p class="muted" style="margin-top:0;">License ID <strong>#<?= esc((string) $id) ?></strong>. Stored status: <?= esc(\App\Models\LicenseModel::statusLabel((string) ($license['license_status'] ?? ''))) ?>; display uses dates where applicable.</p>
+        <?php if (user_can('licenses.create')) : ?>
         <div style="margin-top: 1rem;">
             <a class="btn btn--primary btn--sm" href="<?= site_url('licenses/create?work_id=' . $wid) ?>">Another license for this work</a>
         </div>
+        <?php endif; ?>
     </div>
 </div>
 

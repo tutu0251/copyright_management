@@ -40,7 +40,9 @@ $statuses = [
         <a class="btn btn--secondary btn--sm" href="<?= site_url('works/' . $wid) ?>">← <?= esc((string) ($work['title'] ?? 'Work')) ?></a>
     </div>
     <div class="toolbar__right">
-        <a class="btn btn--secondary btn--sm" href="<?= site_url('owners/create') ?>">New owner record</a>
+        <?php if (user_can('owners.create')) : ?>
+            <a class="btn btn--secondary btn--sm" href="<?= site_url('owners/create') ?>">New owner record</a>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -81,9 +83,11 @@ $statuses = [
                             <td><?= esc($rn) ?></td>
                             <td><?= esc($sn) ?></td>
                             <td class="table-actions">
+                                <?php if (user_can('owners.update')) : ?>
                                 <?= form_open(site_url('works/' . $wid . '/owners/' . $pivId . '/delete'), ['style' => 'display:inline;', 'onsubmit' => "return confirm('Unlink this owner from the work?');"]) ?>
                                     <button type="submit" class="btn btn--ghost btn--sm">Unlink</button>
                                 <?= form_close() ?>
+                                <?php endif; ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -97,8 +101,10 @@ $statuses = [
         <h2 class="card__title">Add link</h2>
         <?php if ($pickOwners === []) : ?>
             <p class="muted">Every owner in the registry is already linked, or there are no owner records yet.</p>
-            <a class="btn btn--primary btn--sm" href="<?= site_url('owners/create') ?>">Create owner</a>
-        <?php else : ?>
+            <?php if (user_can('owners.create')) : ?>
+                <a class="btn btn--primary btn--sm" href="<?= site_url('owners/create') ?>">Create owner</a>
+            <?php endif; ?>
+        <?php elseif (user_can('owners.update')) : ?>
             <?= form_open(site_url('works/' . $wid . '/owners'), ['class' => 'stack']) ?>
                 <div class="field">
                     <label for="owner_id">Owner <span aria-hidden="true">*</span></label>
@@ -143,6 +149,8 @@ $statuses = [
                     <button type="submit" class="btn btn--primary">Link owner</button>
                 </div>
             <?= form_close() ?>
+        <?php else : ?>
+            <p class="muted">You do not have permission to add or change ownership links for this work.</p>
         <?php endif; ?>
     </div>
 </div>

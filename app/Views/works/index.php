@@ -28,7 +28,9 @@ $warn = session()->getFlashdata('warning');
         <?= form_close() ?>
     </div>
     <div class="toolbar__right">
-        <a class="btn btn--primary" href="<?= site_url('works/create') ?>">Register work</a>
+        <?php if (user_can('works.create')) : ?>
+            <a class="btn btn--primary" href="<?= site_url('works/create') ?>">Register work</a>
+        <?php endif; ?>
         <button type="button" class="btn btn--secondary" disabled title="Export not wired yet">Export CSV</button>
     </div>
 </div>

@@ -24,7 +24,9 @@ $auditHistoryMoreUrl = $auditHistoryMoreUrl ?? null;
         <a class="btn btn--secondary btn--sm" href="<?= site_url('works') ?>">← Assets</a>
     </div>
     <div class="toolbar__right">
-        <a class="btn btn--secondary" href="<?= site_url('works/' . $wid . '/edit') ?>">Edit asset</a>
+        <?php if (user_can('works.update')) : ?>
+            <a class="btn btn--secondary" href="<?= site_url('works/' . $wid . '/edit') ?>">Edit asset</a>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -138,9 +140,11 @@ $auditHistoryMoreUrl = $auditHistoryMoreUrl ?? null;
                 </table>
                 <?= $this->include('components/table_end') ?>
             <?php endif; ?>
+            <?php if (user_can('works.update')) : ?>
             <div style="margin-top: 0.75rem;">
                 <a class="btn btn--primary btn--sm" href="<?= site_url('works/' . $wid . '/edit') ?>">Add files</a>
             </div>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -148,9 +152,11 @@ $auditHistoryMoreUrl = $auditHistoryMoreUrl ?? null;
         <div class="card">
             <h2 class="card__title">Ownership</h2>
             <p class="muted" style="margin-top: 0;">Linked parties, roles, and percentages for this work.</p>
+            <?php if (user_can('owners.update')) : ?>
             <div style="margin-bottom: 0.75rem;">
                 <a class="btn btn--primary btn--sm" href="<?= site_url('works/' . $wid . '/owners') ?>">Add / manage owners</a>
             </div>
+            <?php endif; ?>
             <?php if ($ownershipRows === []) : ?>
                 <p class="muted">No owners linked yet. Use <strong>Add / manage owners</strong> to attach parties from the registry.</p>
             <?php else : ?>
@@ -185,7 +191,7 @@ $auditHistoryMoreUrl = $auditHistoryMoreUrl ?? null;
                                 <td><?= esc($r['status'] ?? '—') ?></td>
                                 <td><?= esc($r['since']) ?></td>
                                 <td class="table-actions">
-                                    <?php if ($piv > 0) : ?>
+                                    <?php if ($piv > 0 && user_can('owners.update')) : ?>
                                         <?= form_open(site_url('works/' . $wid . '/owners/' . $piv . '/delete'), ['style' => 'display:inline;', 'onsubmit' => "return confirm('Unlink this owner from the work?');"]) ?>
                                             <button type="submit" class="btn btn--ghost btn--sm">Unlink</button>
                                         <?= form_close() ?>
@@ -250,7 +256,9 @@ $auditHistoryMoreUrl = $auditHistoryMoreUrl ?? null;
                 <?= $this->include('components/table_end') ?>
             <?php endif; ?>
             <div style="margin-top: 0.75rem;">
-                <a class="btn btn--primary btn--sm" href="<?= site_url('licenses/create?work_id=' . $wid) ?>">Create license</a>
+                <?php if (user_can('licenses.create')) : ?>
+                    <a class="btn btn--primary btn--sm" href="<?= site_url('licenses/create?work_id=' . $wid) ?>">Create license</a>
+                <?php endif; ?>
                 <a class="btn btn--secondary btn--sm" href="<?= site_url('licenses') ?>">All licenses</a>
             </div>
         </div>
@@ -292,7 +300,9 @@ $auditHistoryMoreUrl = $auditHistoryMoreUrl ?? null;
                 <?= $this->include('components/table_end') ?>
             <?php endif; ?>
             <div style="margin-top: 0.75rem;">
-                <a class="btn btn--primary btn--sm" href="<?= site_url('usage-reports/create?work_id=' . $wid) ?>">Report usage</a>
+                <?php if (user_can('usage_reports.create')) : ?>
+                    <a class="btn btn--primary btn--sm" href="<?= site_url('usage-reports/create?work_id=' . $wid) ?>">Report usage</a>
+                <?php endif; ?>
                 <a class="btn btn--secondary btn--sm" href="<?= site_url('usage-reports') ?>">All usage reports</a>
             </div>
         </div>

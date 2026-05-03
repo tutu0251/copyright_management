@@ -137,9 +137,15 @@ $topReportedWorks   = $topReportedWorks ?? [];
         <h2 class="card__title">Quick actions</h2>
         <p class="muted" style="margin: 0 0 0.75rem;">Shortcuts for common tasks.</p>
         <div class="quick-actions">
-            <a class="btn btn--primary" href="<?= site_url('works/create') ?>">Register work</a>
-            <a class="btn btn--secondary" href="<?= site_url('licenses/create') ?>">Create license</a>
-            <a class="btn btn--secondary" href="<?= site_url('usage-reports/create') ?>">Report usage</a>
+            <?php if (user_can('works.create')) : ?>
+                <a class="btn btn--primary" href="<?= site_url('works/create') ?>">Register work</a>
+            <?php endif; ?>
+            <?php if (user_can('licenses.create')) : ?>
+                <a class="btn btn--secondary" href="<?= site_url('licenses/create') ?>">Create license</a>
+            <?php endif; ?>
+            <?php if (user_can('usage_reports.create')) : ?>
+                <a class="btn btn--secondary" href="<?= site_url('usage-reports/create') ?>">Report usage</a>
+            <?php endif; ?>
         </div>
         <h3 class="card__title" style="margin-top: 1.25rem;">Pinned assets</h3>
         <div class="table-wrap table-wrap--flush">

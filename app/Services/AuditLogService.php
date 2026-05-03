@@ -16,12 +16,17 @@ class AuditLogService
     public const ACTION_LOGOUT       = 'LOGOUT';
     public const ACTION_STATUS_CHANGE = 'STATUS_CHANGE';
 
+    public const ACTION_PERMISSION_ASSIGNED = 'PERMISSION_ASSIGNED';
+    public const ACTION_PERMISSION_REMOVED  = 'PERMISSION_REMOVED';
+    public const ACTION_ROLE_UPDATED        = 'ROLE_UPDATED';
+
     public const ENTITY_WORK         = 'work';
     public const ENTITY_OWNER        = 'owner';
     public const ENTITY_LICENSE      = 'license';
     public const ENTITY_USAGE_REPORT = 'usage_report';
     public const ENTITY_CASE         = 'case';
     public const ENTITY_USER         = 'user';
+    public const ENTITY_ROLE         = 'role';
 
     /** @var list<string> */
     private const SENSITIVE_KEYS = [

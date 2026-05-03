@@ -31,7 +31,9 @@ $err = session()->getFlashdata('errors');
         <?= form_close() ?>
     </div>
     <div class="toolbar__right">
-        <a class="btn btn--primary" href="<?= site_url('licenses/create') ?>">Create license</a>
+        <?php if (user_can('licenses.create')) : ?>
+            <a class="btn btn--primary" href="<?= site_url('licenses/create') ?>">Create license</a>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -78,7 +80,9 @@ $err = session()->getFlashdata('errors');
                     </td>
                     <td class="table-actions">
                         <a class="btn btn--ghost btn--sm" href="<?= site_url('licenses/' . $id) ?>">View</a>
-                        <a class="btn btn--ghost btn--sm" href="<?= site_url('licenses/' . $id . '/edit') ?>">Edit</a>
+                        <?php if (user_can('licenses.update')) : ?>
+                            <a class="btn btn--ghost btn--sm" href="<?= site_url('licenses/' . $id . '/edit') ?>">Edit</a>
+                        <?php endif; ?>
                     </td>
                 </tr>
             <?php endforeach; ?>

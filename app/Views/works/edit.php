@@ -132,6 +132,7 @@ $files = $files ?? [];
 </div>
 <?php endif; ?>
 
+<?php if (user_can('works.delete')) : ?>
 <div class="card" style="max-width: 880px; margin-top: 1rem;">
     <h2 class="card__title">Archive work</h2>
     <p class="muted">Soft-deletes this catalog row. Linked licenses remain in the database; adjust them separately if required.</p>
@@ -139,3 +140,4 @@ $files = $files ?? [];
         <button type="submit" class="btn btn--secondary">Archive work</button>
     <?= form_close() ?>
 </div>
+<?php endif; ?>

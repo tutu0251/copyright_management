@@ -43,7 +43,9 @@ $errs = session()->getFlashdata('errors');
         <?= form_close() ?>
     </div>
     <div class="toolbar__right">
-        <a class="btn btn--primary" href="<?= site_url('usage-reports/create') ?>">Report usage</a>
+        <?php if (user_can('usage_reports.create')) : ?>
+            <a class="btn btn--primary" href="<?= site_url('usage-reports/create') ?>">Report usage</a>
+        <?php endif; ?>
     </div>
 </div>
 

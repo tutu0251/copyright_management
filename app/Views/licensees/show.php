@@ -15,10 +15,14 @@ $typeLabel = \App\Models\LicenseeModel::typeLabel((string) ($licensee['licensee_
         <a class="btn btn--secondary btn--sm" href="<?= site_url('licensees') ?>">← Licensees</a>
     </div>
     <div class="toolbar__right">
-        <a class="btn btn--secondary" href="<?= site_url('licensees/' . $lid . '/edit') ?>">Edit</a>
-        <?= form_open(site_url('licensees/' . $lid . '/delete'), ['style' => 'display:inline;', 'onsubmit' => "return confirm('Archive this licensee and all licenses assigned to them?');"]) ?>
-            <button type="submit" class="btn btn--ghost">Archive</button>
-        <?= form_close() ?>
+        <?php if (user_can('licensees.update')) : ?>
+            <a class="btn btn--secondary" href="<?= site_url('licensees/' . $lid . '/edit') ?>">Edit</a>
+        <?php endif; ?>
+        <?php if (user_can('licensees.delete')) : ?>
+            <?= form_open(site_url('licensees/' . $lid . '/delete'), ['style' => 'display:inline;', 'onsubmit' => "return confirm('Archive this licensee and all licenses assigned to them?');"]) ?>
+                <button type="submit" class="btn btn--ghost">Archive</button>
+            <?= form_close() ?>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -48,9 +52,11 @@ $typeLabel = \App\Models\LicenseeModel::typeLabel((string) ($licensee['licensee_
     <div class="card">
         <h2 class="card__title">Licenses</h2>
         <p class="muted" style="margin-top: 0;">Agreements referencing this licensee.</p>
+        <?php if (user_can('licenses.create')) : ?>
         <div style="margin-bottom: 0.75rem;">
             <a class="btn btn--primary btn--sm" href="<?= site_url('licenses/create?licensee_id=' . $lid) ?>">Create license</a>
         </div>
+        <?php endif; ?>
         <?php if ($licenses === []) : ?>
             <p class="muted">No licenses yet.</p>
         <?php else : ?>

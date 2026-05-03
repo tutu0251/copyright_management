@@ -15,10 +15,14 @@ $typeLabel = \App\Models\OwnerModel::ownerTypeLabel((string) ($owner['owner_type
         <a class="btn btn--secondary btn--sm" href="<?= site_url('owners') ?>">← Owners</a>
     </div>
     <div class="toolbar__right">
-        <a class="btn btn--secondary" href="<?= site_url('owners/' . $oid . '/edit') ?>">Edit</a>
-        <?= form_open(site_url('owners/' . $oid . '/delete'), ['style' => 'display:inline;', 'onsubmit' => "return confirm('Archive this owner and unlink from all works?');"]) ?>
-            <button type="submit" class="btn btn--ghost">Archive</button>
-        <?= form_close() ?>
+        <?php if (user_can('owners.update')) : ?>
+            <a class="btn btn--secondary" href="<?= site_url('owners/' . $oid . '/edit') ?>">Edit</a>
+        <?php endif; ?>
+        <?php if (user_can('owners.delete')) : ?>
+            <?= form_open(site_url('owners/' . $oid . '/delete'), ['style' => 'display:inline;', 'onsubmit' => "return confirm('Archive this owner and unlink from all works?');"]) ?>
+                <button type="submit" class="btn btn--ghost">Archive</button>
+            <?= form_close() ?>
+        <?php endif; ?>
     </div>
 </div>
 

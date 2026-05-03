@@ -27,4 +27,13 @@ class Services extends BaseService
 
         return new \App\Services\AuditLogService();
     }
+
+    public static function permissions(bool $getShared = true): \App\Services\PermissionService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('permissions');
+        }
+
+        return new \App\Services\PermissionService();
+    }
 }

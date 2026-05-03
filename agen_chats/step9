@@ -1,0 +1,202 @@
+You are a senior CodeIgniter 4 engineer.
+
+I am building a **Copyright Management System**.
+
+## Current Progress
+
+* Step 1: Authentication + database ✔
+* Step 2: Asset Registry ✔
+* Step 3: Ownership ✔
+* Step 4: License Management ✔
+* Step 5: Usage Reports ✔
+* Step 6: Infringement Cases ✔
+* Step 7: Audit Logs ✔
+* Step 8: Advanced Dashboard + Analytics ✔
+
+The mockup UI exists separately and must NOT be modified.
+All real implementation must be separate from mockup.
+
+---
+
+## Now implement Step 9: Fine-Grained RBAC / Permissions System
+
+### Goal
+
+Upgrade the simple role system into a real permission-based access control system.
+
+---
+
+## Features
+
+### 1. Permission Tables
+
+Create migrations if missing:
+
+```text
+permissions
+role_permissions
+```
+
+Example permissions:
+
+```text
+works.view
+works.create
+works.update
+works.delete
+
+owners.view
+owners.create
+owners.update
+owners.delete
+
+licenses.view
+licenses.create
+licenses.update
+licenses.delete
+
+usage_reports.view
+usage_reports.create
+usage_reports.update
+usage_reports.delete
+
+cases.view
+cases.create
+cases.update
+cases.delete
+cases.status_update
+
+dashboard.view
+activities.view
+settings.manage
+users.manage
+```
+
+---
+
+### 2. Role-Permission Management
+
+Create admin UI:
+
+```text
+/settings/roles
+/settings/roles/{id}/permissions
+```
+
+Allow admin to:
+
+* view roles
+* assign permissions to roles
+* remove permissions from roles
+
+---
+
+### 3. Permission Helper / Service
+
+Create reusable helper or service:
+
+```php
+user_can('works.create')
+user_can_any(['works.update', 'works.delete'])
+user_can_all(['cases.view', 'cases.status_update'])
+```
+
+---
+
+### 4. Route Protection
+
+Protect routes by permission, not only login.
+
+Examples:
+
+```text
+/works/create → works.create
+/licenses → licenses.view
+/cases/{id}/status → cases.status_update
+/activities → activities.view
+/settings/roles → settings.manage
+```
+
+---
+
+### 5. UI Permission Control
+
+Hide or disable buttons when user lacks permission:
+
+```text
+Create Work
+Edit
+Delete
+Create License
+Change Case Status
+Manage Roles
+```
+
+---
+
+### 6. Seeder
+
+Create default permissions and assign:
+
+```text
+admin → all permissions
+manager → view/create/update for works, owners, licenses, usage reports, cases
+viewer → view-only permissions
+```
+
+---
+
+### 7. Audit Logging
+
+Log role/permission changes:
+
+```text
+PERMISSION_ASSIGNED
+PERMISSION_REMOVED
+ROLE_UPDATED
+```
+
+---
+
+## Files to Generate / Update
+
+* migrations for permissions and role_permissions
+* PermissionModel
+* RolePermissionModel
+* permission helper/service
+* permission filter
+* settings/roles controller
+* settings role views
+* routes
+* seeders
+* updates to existing controllers/views where needed
+
+---
+
+## Constraints
+
+* Do NOT modify mockup files
+* Do NOT break existing auth/session
+* Keep existing role system, extend it
+* Use CSRF protection
+* Sanitize output
+* Keep code modular
+* Use audit logging for permission changes
+
+---
+
+## Output
+
+Generate full code for:
+
+* migrations
+* models
+* helpers/services
+* filters
+* controllers
+* routes
+* views
+* seeders
+* integration examples in existing views/controllers
+
+Start Step 9 now.

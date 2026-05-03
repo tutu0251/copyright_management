@@ -23,10 +23,14 @@ $id = (int) ($report['id'] ?? 0);
         <a class="btn btn--secondary btn--sm" href="<?= site_url('usage-reports') ?>">← Usage reports</a>
     </div>
     <div class="toolbar__right" style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-        <a class="btn btn--secondary btn--sm" href="<?= site_url('usage-reports/' . $id . '/edit') ?>">Edit</a>
-        <?= form_open(site_url('usage-reports/' . $id . '/delete'), ['style' => 'display:inline;', 'onsubmit' => "return confirm('Archive this usage report?');"]) ?>
-            <button type="submit" class="btn btn--ghost btn--sm">Archive</button>
-        <?= form_close() ?>
+        <?php if (user_can('usage_reports.update')) : ?>
+            <a class="btn btn--secondary btn--sm" href="<?= site_url('usage-reports/' . $id . '/edit') ?>">Edit</a>
+        <?php endif; ?>
+        <?php if (user_can('usage_reports.delete')) : ?>
+            <?= form_open(site_url('usage-reports/' . $id . '/delete'), ['style' => 'display:inline;', 'onsubmit' => "return confirm('Archive this usage report?');"]) ?>
+                <button type="submit" class="btn btn--ghost btn--sm">Archive</button>
+            <?= form_close() ?>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -90,15 +94,17 @@ $id = (int) ($report['id'] ?? 0);
     <h2 class="card__title">Actions</h2>
     <p class="muted" style="margin-top:0;">Update classification or prepare follow-up.</p>
     <div style="display:flex;flex-wrap:wrap;gap:0.75rem;margin-top:0.75rem;">
-        <?= form_open(site_url('usage-reports/' . $id . '/mark-authorized'), ['style' => 'display:inline;']) ?>
-            <button type="submit" class="btn btn--secondary btn--sm" <?= ($report['usage_type'] ?? '') === 'authorized' ? 'disabled' : '' ?>>Mark authorized</button>
-        <?= form_close() ?>
-        <?= form_open(site_url('usage-reports/' . $id . '/mark-infringement'), ['style' => 'display:inline;']) ?>
-            <button type="submit" class="btn btn--secondary btn--sm" <?= ($report['usage_type'] ?? '') === 'infringement' ? 'disabled' : '' ?>>Mark infringement</button>
-        <?= form_close() ?>
+        <?php if (user_can('usage_reports.update')) : ?>
+            <?= form_open(site_url('usage-reports/' . $id . '/mark-authorized'), ['style' => 'display:inline;']) ?>
+                <button type="submit" class="btn btn--secondary btn--sm" <?= ($report['usage_type'] ?? '') === 'authorized' ? 'disabled' : '' ?>>Mark authorized</button>
+            <?= form_close() ?>
+            <?= form_open(site_url('usage-reports/' . $id . '/mark-infringement'), ['style' => 'display:inline;']) ?>
+                <button type="submit" class="btn btn--secondary btn--sm" <?= ($report['usage_type'] ?? '') === 'infringement' ? 'disabled' : '' ?>>Mark infringement</button>
+            <?= form_close() ?>
+        <?php endif; ?>
         <?php if (! empty($report['infringement_case_id'])) : ?>
             <a class="btn btn--primary btn--sm" href="<?= site_url('cases/' . (int) $report['infringement_case_id']) ?>">View case</a>
-        <?php else : ?>
+        <?php elseif (user_can('cases.create')) : ?>
             <a class="btn btn--primary btn--sm" href="<?= site_url('cases/create?usage_report_id=' . $id) ?>">Create case</a>
         <?php endif; ?>
     </div>

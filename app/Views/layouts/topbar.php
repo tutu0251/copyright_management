@@ -1,6 +1,12 @@
 <?php
 // TODO: Wire search to global catalog API; notifications to real-time feed.
+$flashError = session()->getFlashdata('error');
 ?>
+<?php if ($flashError) : ?>
+    <div class="app-flash app-flash--error" role="alert" style="margin:0 1.25rem;padding:0.65rem 1rem;border-radius:8px;background:rgba(196,68,68,0.15);border:1px solid var(--cm-danger, #c44);font-size:0.9rem;">
+        <?= esc((string) $flashError) ?>
+    </div>
+<?php endif; ?>
 <header class="app-topbar">
     <div class="app-topbar__search">
         <span class="app-topbar__search-icon" aria-hidden="true">⌕</span>

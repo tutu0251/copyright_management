@@ -8,28 +8,9 @@ use App\Models\AuditLogModel;
 
 class Activities extends BaseController
 {
-    protected $helpers = ['form', 'url', 'auth'];
+    protected $helpers = ['form', 'url', 'auth', 'permission', 'nav'];
 
     private const PER_PAGE = 50;
-
-    /**
-     * @return list<array{id: string, label: string, path: string}>
-     */
-    private function navItems(): array
-    {
-        return [
-            ['id' => 'dashboard', 'label' => 'Dashboard', 'path' => 'dashboard'],
-            ['id' => 'assets', 'label' => 'Assets', 'path' => 'works'],
-            ['id' => 'owners', 'label' => 'Owners', 'path' => 'owners'],
-            ['id' => 'licensees', 'label' => 'Licensees', 'path' => 'licensees'],
-            ['id' => 'licenses', 'label' => 'Licenses', 'path' => 'licenses'],
-            ['id' => 'usage_reports', 'label' => 'Usage reports', 'path' => 'usage-reports'],
-            ['id' => 'cases', 'label' => 'Cases', 'path' => 'cases'],
-            ['id' => 'activities', 'label' => 'Activity', 'path' => 'activities'],
-            ['id' => 'reports', 'label' => 'Reports', 'path' => 'mockup/reports'],
-            ['id' => 'settings', 'label' => 'Settings', 'path' => 'mockup/settings'],
-        ];
-    }
 
     private function layout(string $view, array $data = []): string
     {
@@ -42,7 +23,7 @@ class Activities extends BaseController
                 'name' => $user['display_name'] ?? 'User',
                 'role' => auth_primary_role_label(),
             ],
-            'nav'           => $this->navItems(),
+            'nav'           => copyright_nav_items(),
             'useAuthLogout' => true,
             'useCharts'     => false,
             'chartPayload'  => null,

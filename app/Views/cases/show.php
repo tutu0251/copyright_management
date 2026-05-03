@@ -28,10 +28,14 @@ $cid = (int) ($caseRow['id'] ?? 0);
         <a class="btn btn--secondary btn--sm" href="<?= site_url('cases') ?>">← Cases</a>
     </div>
     <div class="toolbar__right" style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-        <a class="btn btn--secondary btn--sm" href="<?= site_url('cases/' . $cid . '/edit') ?>">Edit</a>
-        <?= form_open(site_url('cases/' . $cid . '/delete'), ['style' => 'display:inline;', 'onsubmit' => "return confirm('Delete this case permanently?');"]) ?>
-            <button type="submit" class="btn btn--ghost btn--sm">Delete</button>
-        <?= form_close() ?>
+        <?php if (user_can('cases.update')) : ?>
+            <a class="btn btn--secondary btn--sm" href="<?= site_url('cases/' . $cid . '/edit') ?>">Edit</a>
+        <?php endif; ?>
+        <?php if (user_can('cases.delete')) : ?>
+            <?= form_open(site_url('cases/' . $cid . '/delete'), ['style' => 'display:inline;', 'onsubmit' => "return confirm('Delete this case permanently?');"]) ?>
+                <button type="submit" class="btn btn--ghost btn--sm">Delete</button>
+            <?= form_close() ?>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -136,6 +140,7 @@ $cid = (int) ($caseRow['id'] ?? 0);
             <?php endforeach; ?>
         </ul>
     <?php endif; ?>
+    <?php if (user_can('cases.update')) : ?>
     <?= form_open_multipart(site_url('cases/' . $cid . '/evidence'), ['class' => 'stack', 'style' => 'margin-top:1rem;']) ?>
         <div class="field">
             <label for="evidence_file">Upload file</label>
@@ -143,9 +148,11 @@ $cid = (int) ($caseRow['id'] ?? 0);
         </div>
         <button type="submit" class="btn btn--secondary btn--sm">Upload evidence</button>
     <?= form_close() ?>
+    <?php endif; ?>
 </div>
 
 <div class="grid grid--2" style="margin-top: 1rem;">
+    <?php if (user_can('cases.status_update')) : ?>
     <div class="card">
         <h2 class="card__title">Change status</h2>
         <?= form_open(site_url('cases/' . $cid . '/status'), ['class' => 'stack']) ?>
@@ -164,6 +171,8 @@ $cid = (int) ($caseRow['id'] ?? 0);
             <button type="submit" class="btn btn--primary btn--sm">Update status</button>
         <?= form_close() ?>
     </div>
+    <?php endif; ?>
+    <?php if (user_can('cases.update')) : ?>
     <div class="card">
         <h2 class="card__title">Add note</h2>
         <?= form_open(site_url('cases/' . $cid . '/note'), ['class' => 'stack']) ?>
@@ -174,6 +183,7 @@ $cid = (int) ($caseRow['id'] ?? 0);
             <button type="submit" class="btn btn--secondary btn--sm">Save note</button>
         <?= form_close() ?>
     </div>
+    <?php endif; ?>
 </div>
 
 <div class="card" style="margin-top: 1rem;">

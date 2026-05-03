@@ -53,7 +53,9 @@ $err = session()->getFlashdata('errors');
         </form>
     </div>
     <div class="toolbar__right">
-        <a class="btn btn--primary" href="<?= site_url('cases/create') ?>">Open case</a>
+        <?php if (user_can('cases.create')) : ?>
+            <a class="btn btn--primary" href="<?= site_url('cases/create') ?>">Open case</a>
+        <?php endif; ?>
     </div>
 </div>
 

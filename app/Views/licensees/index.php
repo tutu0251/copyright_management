@@ -31,7 +31,9 @@ $err = session()->getFlashdata('errors');
         <?= form_close() ?>
     </div>
     <div class="toolbar__right">
-        <a class="btn btn--primary" href="<?= site_url('licensees/create') ?>">Create licensee</a>
+        <?php if (user_can('licensees.create')) : ?>
+            <a class="btn btn--primary" href="<?= site_url('licensees/create') ?>">Create licensee</a>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -67,7 +69,9 @@ $err = session()->getFlashdata('errors');
                     <td><?= esc($o['updated_at'] !== null && $o['updated_at'] !== '' ? (string) $o['updated_at'] : '—') ?></td>
                     <td class="table-actions">
                         <a class="btn btn--ghost btn--sm" href="<?= site_url('licensees/' . $oid) ?>">View</a>
-                        <a class="btn btn--ghost btn--sm" href="<?= site_url('licensees/' . $oid . '/edit') ?>">Edit</a>
+                        <?php if (user_can('licensees.update')) : ?>
+                            <a class="btn btn--ghost btn--sm" href="<?= site_url('licensees/' . $oid . '/edit') ?>">Edit</a>
+                        <?php endif; ?>
                     </td>
                 </tr>
             <?php endforeach; ?>
