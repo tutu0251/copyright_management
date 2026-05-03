@@ -10,7 +10,7 @@ use Config\App;
 class Language extends BaseController
 {
     /**
-     * GET /lang/{en|ja} — store locale in session and redirect back.
+     * GET /lang/{en|ja|zh} — store locale in session and redirect back.
      */
     public function set(string $locale): ResponseInterface
     {

@@ -21,8 +21,14 @@ $locale     = service('request')->getLocale();
                     onchange="if(this.value) window.location.href=this.value;">
                 <option value="<?= esc(current_lang_url('en'), 'attr') ?>" <?= $locale === 'en' ? 'selected' : '' ?>><?= esc(lang('App.lang_english')) ?></option>
                 <option value="<?= esc(current_lang_url('ja'), 'attr') ?>" <?= $locale === 'ja' ? 'selected' : '' ?>><?= esc(lang('App.lang_japanese')) ?></option>
+                <option value="<?= esc(current_lang_url('zh'), 'attr') ?>" <?= $locale === 'zh' ? 'selected' : '' ?>><?= esc(lang('App.lang_chinese')) ?></option>
             </select>
         </div>
+        <?php if (! empty($useAuthLogout)) : ?>
+            <?= form_open(site_url('logout'), ['class' => 'app-topbar__logout-form', 'style' => 'display:inline;margin:0;']) ?>
+                <button type="submit" class="btn btn--ghost btn--sm" style="white-space:nowrap;"><?= esc(lang('App.auth_logout')) ?></button>
+            <?= form_close() ?>
+        <?php endif; ?>
         <button type="button" class="ui-icon-btn ui-icon-btn--ghost" id="btn-notifications" title="<?= esc(lang('App.topbar_notifications'), 'attr') ?>" aria-label="<?= esc(lang('App.topbar_notifications'), 'attr') ?>">
             <span class="ui-bell" aria-hidden="true"></span>
             <span class="ui-dot" aria-hidden="true"></span>

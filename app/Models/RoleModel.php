@@ -29,6 +29,17 @@ class RoleModel extends Model
     /**
      * @return list<array<string, mixed>>
      */
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function findBySlug(string $slug): ?array
+    {
+        return $this->where('slug', $slug)->first();
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
     public function rolesForUser(int $userId): array
     {
         return $this->db->table('roles')
@@ -38,5 +49,17 @@ class RoleModel extends Model
             ->orderBy('roles.id', 'ASC')
             ->get()
             ->getResultArray();
+    }
+
+    /**
+     * Roles that can be toggled in the user management UI (admin / manager / viewer).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function managementAssignableRoles(): array
+    {
+        $slugs = ['admin', 'manager', 'viewer'];
+
+        return $this->whereIn('slug', $slugs)->orderBy('id', 'ASC')->findAll();
     }
 }

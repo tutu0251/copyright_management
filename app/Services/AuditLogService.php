@@ -12,13 +12,21 @@ class AuditLogService
     public const ACTION_CREATE        = 'CREATE';
     public const ACTION_UPDATE       = 'UPDATE';
     public const ACTION_DELETE       = 'DELETE';
-    public const ACTION_LOGIN        = 'LOGIN';
-    public const ACTION_LOGOUT       = 'LOGOUT';
+    public const ACTION_LOGIN         = 'LOGIN';
+    public const ACTION_LOGIN_FAILED  = 'LOGIN_FAILED';
+    public const ACTION_LOGOUT        = 'LOGOUT';
+    public const ACTION_REGISTER      = 'REGISTER';
     public const ACTION_STATUS_CHANGE = 'STATUS_CHANGE';
 
     public const ACTION_PERMISSION_ASSIGNED = 'PERMISSION_ASSIGNED';
     public const ACTION_PERMISSION_REMOVED  = 'PERMISSION_REMOVED';
     public const ACTION_ROLE_UPDATED        = 'ROLE_UPDATED';
+
+    public const ACTION_USER_CREATED        = 'USER_CREATED';
+    public const ACTION_USER_UPDATED        = 'USER_UPDATED';
+    public const ACTION_USER_DEACTIVATED    = 'USER_DEACTIVATED';
+    public const ACTION_USER_ACTIVATED      = 'USER_ACTIVATED';
+    public const ACTION_USER_ROLE_UPDATED   = 'USER_ROLE_UPDATED';
 
     public const ENTITY_WORK         = 'work';
     public const ENTITY_OWNER        = 'owner';
@@ -33,6 +41,7 @@ class AuditLogService
         'password',
         'password_hash',
         'password_confirm',
+        'confirm_password',
         'remember_token',
         'csrf_test_name',
     ];
@@ -60,6 +69,9 @@ class AuditLogService
         if ($uid === null) {
             $sess = session();
             $v = $sess->get('auth_user_id');
+            if ($v === null || $v === '') {
+                $v = $sess->get('user_id');
+            }
             $uid = is_numeric($v) ? (int) $v : null;
         }
 

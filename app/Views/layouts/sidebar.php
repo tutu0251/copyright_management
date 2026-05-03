@@ -42,7 +42,7 @@ $useAuthLogout ??= false;
         </div>
         <?php if ($useAuthLogout) : ?>
             <?= form_open(site_url('logout'), ['class' => 'app-sidebar__logout-form', 'style' => 'margin: 0;']) ?>
-                <button type="submit" class="btn btn--ghost btn--sm app-sidebar__logout"><?= esc(lang('App.action_logout')) ?></button>
+                <button type="submit" class="btn btn--ghost btn--sm app-sidebar__logout"><?= esc(lang('App.auth_logout')) ?></button>
             <?= form_close() ?>
         <?php else : ?>
             <button type="button" class="btn btn--ghost btn--sm app-sidebar__logout" id="btn-logout-mock"><?= esc(lang('App.action_logout')) ?></button>

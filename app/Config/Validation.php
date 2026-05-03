@@ -49,4 +49,26 @@ class Validation extends BaseConfig
         'email'    => 'required|valid_email',
         'password' => 'required',
     ];
+
+    /**
+     * @var array<string, string>
+     */
+    public array $register = [
+        'name'              => 'required|min_length[1]|max_length[120]',
+        'email'             => 'required|valid_email|is_unique[users.email]',
+        'password'          => 'required|min_length[8]',
+        'password_confirm'  => 'required|matches[password]',
+    ];
+
+    /**
+     * Admin user management — create user.
+     *
+     * @var array<string, string>
+     */
+    public array $userManagementCreate = [
+        'display_name'     => 'required|min_length[1]|max_length[120]',
+        'email'            => 'required|valid_email|is_unique[users.email]',
+        'password'         => 'required|min_length[8]',
+        'password_confirm' => 'required|matches[password]',
+    ];
 }

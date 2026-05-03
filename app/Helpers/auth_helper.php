@@ -11,13 +11,25 @@ if (! function_exists('auth_user')) {
         $session = session();
         $id      = $session->get('auth_user_id');
         if ($id === null || $id === '') {
+            $id = $session->get('user_id');
+        }
+        if ($id === null || $id === '') {
             return null;
         }
 
+        $email = $session->get('auth_email');
+        if ($email === null || $email === '') {
+            $email = $session->get('email');
+        }
+        $name = $session->get('auth_display_name');
+        if ($name === null || $name === '') {
+            $name = $session->get('name');
+        }
+
         return [
-            'id'             => (int) $id,
-            'email'          => (string) $session->get('auth_email'),
-            'display_name'   => (string) $session->get('auth_display_name'),
+            'id'           => (int) $id,
+            'email'        => (string) $email,
+            'display_name' => (string) $name,
         ];
     }
 }
@@ -35,7 +47,11 @@ if (! function_exists('auth_role_slugs')) {
      */
     function auth_role_slugs(): array
     {
-        $raw = session()->get('auth_role_slugs');
+        $session = session();
+        $raw     = $session->get('auth_role_slugs');
+        if (! is_array($raw) || $raw === []) {
+            $raw = $session->get('role_slugs');
+        }
         if (! is_array($raw)) {
             return [];
         }

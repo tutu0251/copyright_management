@@ -1,0 +1,184 @@
+You are a senior CodeIgniter 4 engineer.
+
+I am building a **Copyright Management System**.
+
+## Task
+
+Implement **User Management** for admins.
+
+Do NOT modify mockup files.
+
+---
+
+## Features
+
+### 1. User List
+
+Create:
+
+```text
+/users
+```
+
+Show:
+
+* name
+* email
+* status
+* roles
+* created date
+* last login if available
+* action buttons
+
+---
+
+### 2. Create User
+
+Admin can create users with:
+
+* name
+* email
+* password
+* confirm password
+* active status
+* role selection
+
+Password must use:
+
+```php
+password_hash()
+```
+
+---
+
+### 3. Edit User
+
+Admin can update:
+
+* name
+* email
+* active / inactive status
+* roles
+
+Password should be optional:
+
+* if password field is empty, keep old password
+* if filled, update hashed password
+
+---
+
+### 4. Delete / Deactivate User
+
+Prefer deactivate instead of hard delete.
+
+Support:
+
+* activate user
+* deactivate user
+
+---
+
+### 5. Role Assignment
+
+Use existing:
+
+```text
+roles
+user_roles
+```
+
+Allow assigning:
+
+* admin
+* manager
+* viewer
+
+---
+
+## Routes
+
+```php
+GET  /users
+GET  /users/create
+POST /users
+GET  /users/(:num)
+GET  /users/(:num)/edit
+POST /users/(:num)/update
+POST /users/(:num)/deactivate
+POST /users/(:num)/activate
+```
+
+---
+
+## Security
+
+* Only users with permission:
+
+```text
+users.manage
+```
+
+can access this module.
+
+* Use CSRF
+* Validate email uniqueness
+* Never display password hashes
+* Prevent admin from deactivating their own account
+* Use audit logs:
+
+  * USER_CREATED
+  * USER_UPDATED
+  * USER_DEACTIVATED
+  * USER_ACTIVATED
+  * USER_ROLE_UPDATED
+
+---
+
+## Localization
+
+Support:
+
+* English
+* Japanese
+
+Use `lang()` for visible text.
+
+Update:
+
+```text
+app/Language/en/App.php
+app/Language/ja/App.php
+```
+
+---
+
+## Files to Create / Update
+
+* Users controller
+* UserModel if needed
+* RoleModel if needed
+* UserRoleModel if needed
+* Routes
+* views:
+
+```text
+main/Views/users/
+  index.php
+  create.php
+  show.php
+  edit.php
+```
+
+* language files
+* sidebar/topbar link if permission allows
+
+---
+
+## Important
+
+* Do NOT modify mockup files
+* Do NOT break existing auth/register/logout
+* Keep CodeIgniter 4 MVC clean
+* Generate full updated code for all changed files
+
+Start User Management now.

@@ -22,6 +22,7 @@ if (! function_exists('copyright_nav_items')) {
             ['id' => 'cases', 'label' => lang('App.nav_cases'), 'path' => 'cases', 'perm' => 'cases.view'],
             ['id' => 'activities', 'label' => lang('App.nav_activities'), 'path' => 'activities', 'perm' => 'activities.view'],
             ['id' => 'reports', 'label' => lang('App.nav_reports'), 'path' => 'reports', 'perm' => 'reports.view'],
+            ['id' => 'users', 'label' => lang('App.nav_users'), 'path' => 'users', 'perm' => 'users.manage'],
             ['id' => 'settings_roles', 'label' => lang('App.nav_settings_roles'), 'path' => 'settings/roles', 'perm' => 'settings.manage'],
         ];
 

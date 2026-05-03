@@ -26,8 +26,13 @@ if (! function_exists('localized_date')) {
         if (class_exists(IntlDateFormatter::class)) {
             $dateType = IntlDateFormatter::MEDIUM;
             $timeType = $withTime ? IntlDateFormatter::SHORT : IntlDateFormatter::NONE;
+            $intlLocale = match ($locale) {
+                'ja' => 'ja_JP',
+                'zh' => 'zh_CN',
+                default => 'en_US',
+            };
             $fmt      = IntlDateFormatter::create(
-                $locale === 'ja' ? 'ja_JP' : 'en_US',
+                $intlLocale,
                 $dateType,
                 $timeType,
                 date_default_timezone_get(),
@@ -41,6 +46,9 @@ if (! function_exists('localized_date')) {
         }
 
         if ($locale === 'ja') {
+            return $withTime ? date('Y年n月j日 H:i', $ts) : date('Y年n月j日', $ts);
+        }
+        if ($locale === 'zh') {
             return $withTime ? date('Y年n月j日 H:i', $ts) : date('Y年n月j日', $ts);
         }
 
@@ -62,13 +70,23 @@ if (! function_exists('localized_month_year')) {
         $locale = service('request')->getLocale();
 
         if (class_exists(IntlDateFormatter::class)) {
+            $intlLocale = match ($locale) {
+                'ja' => 'ja_JP',
+                'zh' => 'zh_CN',
+                default => 'en_US',
+            };
+            $pattern = match ($locale) {
+                'ja' => 'y年M月',
+                'zh' => 'y年M月',
+                default => 'MMM y',
+            };
             $fmt = IntlDateFormatter::create(
-                $locale === 'ja' ? 'ja_JP' : 'en_US',
+                $intlLocale,
                 IntlDateFormatter::NONE,
                 IntlDateFormatter::NONE,
                 date_default_timezone_get(),
                 IntlDateFormatter::GREGORIAN,
-                $locale === 'ja' ? 'y年M月' : 'MMM y',
+                $pattern,
             );
             if ($fmt instanceof IntlDateFormatter) {
                 $out = $fmt->format($ts);

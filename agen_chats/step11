@@ -1,0 +1,234 @@
+You are a senior CodeIgniter 4 engineer.
+
+I am building a **Copyright Management System**.
+
+## Task
+
+Implement/review the full authentication feature:
+
+1. User login
+2. User logout
+3. User registration
+4. Protected routes
+5. Audit logging
+6. Localization support
+
+Do NOT modify mockup files.
+
+---
+
+## Login Requirements
+
+* Login page
+* Email + password form
+* Validate input
+* Check user exists
+* Check user is active
+* Verify password using:
+
+```php
+password_verify()
+```
+
+* Regenerate session ID after successful login
+
+* Store session:
+
+  * user_id
+  * email
+  * name
+  * role_slugs
+  * is_logged_in
+
+* Add audit log events:
+
+  * LOGIN
+  * LOGIN_FAILED
+
+---
+
+## Logout Requirements
+
+* Use POST logout route
+* Destroy user session safely
+* Redirect to login page
+* Show success flash message
+* Add audit log event:
+
+  * LOGOUT
+
+---
+
+## Registration Requirements
+
+Create public registration page:
+
+```text
+/register
+```
+
+Fields:
+
+* name
+* email
+* password
+* confirm password
+
+Validation:
+
+* name required
+* email required + valid + unique
+* password minimum 8 characters
+* confirm password must match password
+
+Security:
+
+* Save password using:
+
+```php
+password_hash()
+```
+
+* New users active by default
+* Assign default role:
+
+```text
+viewer
+```
+
+* If viewer role does not exist, create it or show clear error
+* Do NOT auto-login after registration
+* Redirect to login with success message
+* Add audit log event:
+
+  * REGISTER
+
+---
+
+## Route Requirements
+
+```php
+GET  /login
+POST /login
+GET  /register
+POST /register
+POST /logout
+```
+
+Protected routes must require login.
+
+---
+
+## Auth Filter Requirements
+
+* Guests cannot access protected pages
+* Logged-in users should be redirected away from login/register if appropriate
+* Keep existing protected route groups working
+
+---
+
+## UI Requirements
+
+Create/update:
+
+```text
+main/Views/auth/login.php
+main/Views/auth/register.php
+```
+
+Login page:
+
+* email
+* password
+* submit button
+* link to `/register`
+
+Register page:
+
+* name
+* email
+* password
+* confirm password
+* submit button
+* link to `/login`
+
+Layout:
+
+* logout must be a POST form/button, not a GET link
+
+---
+
+## Localization
+
+Keep English, Japanese, and Chinese support.
+
+Use `lang()` for visible labels:
+
+* Login
+* Logout
+* Register
+* Name
+* Email
+* Password
+* Confirm Password
+* Create Account
+* Already have an account?
+* Invalid credentials
+* Registration successful
+* Account inactive
+* Email already exists
+
+Update:
+
+```text
+app/Language/en/App.php
+app/Language/ja/App.php
+app/Language/zh/App.php
+```
+
+---
+
+## Audit Logging
+
+If `AuditLogService` exists, use it.
+
+Log:
+
+* LOGIN
+* LOGOUT
+* LOGIN_FAILED
+* REGISTER
+
+Do not log:
+
+* raw passwords
+* password hashes
+
+---
+
+## Files to Create / Update
+
+* Auth controller
+* UserModel
+* RoleModel if needed
+* AuthFilter if needed
+* GuestFilter if needed
+* Routes
+* Login view
+* Register view
+* Layout logout form/button
+* Language files
+* Seeder if needed
+
+---
+
+## Important Constraints
+
+* Do NOT modify mockup files
+* Do NOT break existing auth/session
+* Do NOT expose passwords or hashes
+* Use CSRF protection
+* Use CodeIgniter 4 MVC best practices
+* Generate full updated code for all changed files
+
+Start now.

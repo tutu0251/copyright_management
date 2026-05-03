@@ -15,6 +15,8 @@ $routes->get('lang/(:segment)', 'Language::set/$1');
 $routes->group('', ['filter' => 'guest'], static function ($routes) {
     $routes->get('login', 'Auth::login');
     $routes->post('login', 'Auth::attemptLogin');
+    $routes->get('register', 'Auth::register');
+    $routes->post('register', 'Auth::attemptRegister');
 });
 
 $routes->group('', ['filter' => 'auth'], static function ($routes) {
@@ -34,6 +36,15 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
     $routes->get('settings/roles', 'SettingsRoles::index', ['filter' => 'permission:settings.manage']);
     $routes->get('settings/roles/(:num)/permissions', 'SettingsRoles::editPermissions/$1', ['filter' => 'permission:settings.manage']);
     $routes->post('settings/roles/(:num)/permissions', 'SettingsRoles::updatePermissions/$1', ['filter' => 'permission:settings.manage']);
+
+    $routes->get('users', 'Users::index', ['filter' => 'permission:users.manage']);
+    $routes->get('users/create', 'Users::create', ['filter' => 'permission:users.manage']);
+    $routes->post('users', 'Users::store', ['filter' => 'permission:users.manage']);
+    $routes->get('users/(:num)', 'Users::show/$1', ['filter' => 'permission:users.manage']);
+    $routes->get('users/(:num)/edit', 'Users::edit/$1', ['filter' => 'permission:users.manage']);
+    $routes->post('users/(:num)/update', 'Users::update/$1', ['filter' => 'permission:users.manage']);
+    $routes->post('users/(:num)/deactivate', 'Users::deactivate/$1', ['filter' => 'permission:users.manage']);
+    $routes->post('users/(:num)/activate', 'Users::activate/$1', ['filter' => 'permission:users.manage']);
 
     $routes->get('owners', 'Owners::index', ['filter' => 'permission:owners.view']);
     $routes->get('owners/create', 'Owners::create', ['filter' => 'permission:owners.create']);
