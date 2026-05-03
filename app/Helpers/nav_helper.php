@@ -13,16 +13,16 @@ if (! function_exists('copyright_nav_items')) {
         helper('permission');
 
         $definitions = [
-            ['id' => 'dashboard', 'label' => 'Dashboard', 'path' => 'dashboard', 'perm' => 'dashboard.view'],
-            ['id' => 'assets', 'label' => 'Assets', 'path' => 'works', 'perm' => 'works.view'],
-            ['id' => 'owners', 'label' => 'Owners', 'path' => 'owners', 'perm' => 'owners.view'],
-            ['id' => 'licensees', 'label' => 'Licensees', 'path' => 'licensees', 'perm' => 'licensees.view'],
-            ['id' => 'licenses', 'label' => 'Licenses', 'path' => 'licenses', 'perm' => 'licenses.view'],
-            ['id' => 'usage_reports', 'label' => 'Usage reports', 'path' => 'usage-reports', 'perm' => 'usage_reports.view'],
-            ['id' => 'cases', 'label' => 'Cases', 'path' => 'cases', 'perm' => 'cases.view'],
-            ['id' => 'activities', 'label' => 'Activity', 'path' => 'activities', 'perm' => 'activities.view'],
-            ['id' => 'reports', 'label' => 'Reports', 'path' => 'reports', 'perm' => 'reports.view'],
-            ['id' => 'settings_roles', 'label' => 'Roles & permissions', 'path' => 'settings/roles', 'perm' => 'settings.manage'],
+            ['id' => 'dashboard', 'label' => lang('App.nav_dashboard'), 'path' => 'dashboard', 'perm' => 'dashboard.view'],
+            ['id' => 'assets', 'label' => lang('App.nav_assets'), 'path' => 'works', 'perm' => 'works.view'],
+            ['id' => 'owners', 'label' => lang('App.nav_owners'), 'path' => 'owners', 'perm' => 'owners.view'],
+            ['id' => 'licensees', 'label' => lang('App.nav_licensees'), 'path' => 'licensees', 'perm' => 'licensees.view'],
+            ['id' => 'licenses', 'label' => lang('App.nav_licenses'), 'path' => 'licenses', 'perm' => 'licenses.view'],
+            ['id' => 'usage_reports', 'label' => lang('App.nav_usage_reports'), 'path' => 'usage-reports', 'perm' => 'usage_reports.view'],
+            ['id' => 'cases', 'label' => lang('App.nav_cases'), 'path' => 'cases', 'perm' => 'cases.view'],
+            ['id' => 'activities', 'label' => lang('App.nav_activities'), 'path' => 'activities', 'perm' => 'activities.view'],
+            ['id' => 'reports', 'label' => lang('App.nav_reports'), 'path' => 'reports', 'perm' => 'reports.view'],
+            ['id' => 'settings_roles', 'label' => lang('App.nav_settings_roles'), 'path' => 'settings/roles', 'perm' => 'settings.manage'],
         ];
 
         $out = [];

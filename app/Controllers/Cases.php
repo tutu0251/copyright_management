@@ -19,7 +19,7 @@ use CodeIgniter\HTTP\ResponseInterface;
 
 class Cases extends BaseController
 {
-    protected $helpers = ['form', 'url', 'auth', 'permission', 'nav'];
+    protected $helpers = ['form', 'url', 'auth', 'permission', 'nav', 'locale'];
 
     private const EVIDENCE_MAX_BYTES = 10_485_760; // 10 MiB
 
@@ -33,7 +33,7 @@ class Cases extends BaseController
         $user = auth_user();
 
         $defaults = [
-            'pageTitle'     => 'Cases',
+            'pageTitle'     => lang('App.nav_cases'),
             'currentPage'   => 'cases',
             'currentUser'   => [
                 'name' => $user['display_name'] ?? 'User',
@@ -43,7 +43,7 @@ class Cases extends BaseController
             'useAuthLogout' => true,
             'useCharts'     => false,
             'chartPayload'  => null,
-            'appCrumb'      => 'Copyright Management · Infringement cases',
+            'appCrumb'      => lang('App.crumb_infringement_cases'),
         ];
 
         $payload            = array_merge($defaults, $data);
@@ -56,7 +56,7 @@ class Cases extends BaseController
     {
         if (! InfringementCaseModel::schemaReady()) {
             return $this->layout('cases/index', [
-                'pageTitle'         => 'Cases',
+                'pageTitle'         => lang('App.nav_cases'),
                 'rows'              => [],
                 'searchQuery'       => '',
                 'statusFilter'      => '',
@@ -87,7 +87,7 @@ class Cases extends BaseController
         }
 
         return $this->layout('cases/index', [
-            'pageTitle'         => 'Cases',
+            'pageTitle'         => lang('App.nav_cases'),
             'rows'              => $viewRows,
             'searchQuery'       => $q,
             'statusFilter'      => $status,
@@ -100,7 +100,7 @@ class Cases extends BaseController
     {
         if (! InfringementCaseModel::schemaReady()) {
             return $this->layout('cases/create', [
-                'pageTitle'         => 'Open case',
+                'pageTitle'         => lang('App.cases_open_case'),
                 'works'             => [],
                 'users'             => [],
                 'prefillWorkId'     => null,
@@ -139,7 +139,7 @@ class Cases extends BaseController
         }
 
         return $this->layout('cases/create', [
-            'pageTitle'         => 'Open case',
+            'pageTitle'         => lang('App.cases_open_case'),
             'works'             => $works,
             'users'             => $users,
             'prefillWorkId'     => $workId > 0 ? $workId : null,
@@ -271,7 +271,7 @@ class Cases extends BaseController
         }
 
         return $this->layout('cases/show', [
-            'pageTitle'           => 'Case · ' . (string) ($row['case_title'] ?? ''),
+            'pageTitle'           => lang('App.cases_page_view', ['title' => (string) ($row['case_title'] ?? '')]),
             'caseRow'             => $this->formatCaseForView($row),
             'usageReport'         => $usageReport,
             'evidence'            => $evidence,
@@ -302,7 +302,7 @@ class Cases extends BaseController
         }
 
         return $this->layout('cases/edit', [
-            'pageTitle' => 'Edit case',
+            'pageTitle' => lang('App.cases_page_edit'),
             'caseRow'   => $row,
             'works'     => model(WorkModel::class)->select('id, title')->orderBy('title', 'ASC')->limit(500)->findAll(),
             'users'     => $this->usersForAssign(),

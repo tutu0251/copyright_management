@@ -13,7 +13,7 @@ use CodeIgniter\HTTP\ResponseInterface;
 
 class UsageReports extends BaseController
 {
-    protected $helpers = ['form', 'url', 'auth', 'permission', 'nav'];
+    protected $helpers = ['form', 'url', 'auth', 'permission', 'nav', 'locale'];
 
     private const EVIDENCE_MAX_BYTES = 10_485_760; // 10 MiB
 
@@ -27,7 +27,7 @@ class UsageReports extends BaseController
         $user = auth_user();
 
         $defaults = [
-            'pageTitle'     => 'Usage reports',
+            'pageTitle'     => lang('App.nav_usage_reports'),
             'currentPage'   => 'usage_reports',
             'currentUser'   => [
                 'name' => $user['display_name'] ?? 'User',
@@ -37,7 +37,7 @@ class UsageReports extends BaseController
             'useAuthLogout' => true,
             'useCharts'     => false,
             'chartPayload'  => null,
-            'appCrumb'      => 'Copyright Management · Usage monitoring',
+            'appCrumb'      => lang('App.crumb_usage_monitoring'),
         ];
 
         $payload            = array_merge($defaults, $data);

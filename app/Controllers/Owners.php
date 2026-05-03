@@ -12,14 +12,14 @@ use CodeIgniter\HTTP\ResponseInterface;
 
 class Owners extends BaseController
 {
-    protected $helpers = ['form', 'url', 'auth', 'permission', 'nav'];
+    protected $helpers = ['form', 'url', 'auth', 'permission', 'nav', 'locale'];
 
     private function layout(string $view, array $data = []): string
     {
         $user = auth_user();
 
         $defaults = [
-            'pageTitle'   => 'Owners',
+            'pageTitle'   => lang('App.nav_owners'),
             'currentPage' => 'owners',
             'currentUser' => [
                 'name' => $user['display_name'] ?? 'User',
@@ -29,7 +29,7 @@ class Owners extends BaseController
             'useAuthLogout' => true,
             'useCharts'     => false,
             'chartPayload'  => null,
-            'appCrumb'      => 'Copyright Management · Owners',
+            'appCrumb'      => lang('App.crumb_owners'),
         ];
 
         $payload            = array_merge($defaults, $data);

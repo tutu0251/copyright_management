@@ -13,14 +13,14 @@ use App\Services\PermissionService;
 
 class SettingsRoles extends BaseController
 {
-    protected $helpers = ['form', 'url', 'auth', 'permission', 'nav'];
+    protected $helpers = ['form', 'url', 'auth', 'permission', 'nav', 'locale'];
 
     private function layout(string $view, array $data = []): string
     {
         $user = auth_user();
 
         $defaults = [
-            'pageTitle'     => 'Roles & permissions',
+            'pageTitle'     => lang('App.nav_settings_roles'),
             'currentPage'   => 'settings_roles',
             'currentUser'   => [
                 'name' => $user['display_name'] ?? 'User',
@@ -30,7 +30,7 @@ class SettingsRoles extends BaseController
             'useAuthLogout' => true,
             'useCharts'     => false,
             'chartPayload'  => null,
-            'appCrumb'      => 'Copyright Management · Access control',
+            'appCrumb'      => lang('App.crumb_access_control'),
         ];
 
         $payload            = array_merge($defaults, $data);

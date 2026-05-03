@@ -11,23 +11,23 @@ $exportQuery = $exportQuery ?? '';
 ]) ?>
 <?= view('reports/_export_bar', ['exportQuery' => $exportQuery]) ?>
 
-<p class="page-intro">Cross-module snapshot for the selected window. Open a dedicated report for deeper charts and tables.</p>
+<p class="page-intro"><?= esc(lang('App.reports_intro')) ?></p>
 
 <div class="grid grid--stats" style="margin-bottom:1.25rem;">
-    <?= view('components/cards', ['kpi_label' => 'Total works', 'kpi_value' => (string) ($worksTotal ?? 0), 'kpi_hint' => 'Catalog (respects work type filter)', 'kpi_key' => 'default', 'kpi_href' => site_url('works')]) ?>
-    <?= view('components/cards', ['kpi_label' => 'Works created in range', 'kpi_value' => (string) ($worksCreated ?? 0), 'kpi_hint' => 'By created_at', 'kpi_key' => 'default', 'kpi_href' => site_url('reports/works')]) ?>
-    <?= view('components/cards', ['kpi_label' => 'Active licenses', 'kpi_value' => (string) (($licSnap['active'] ?? 0)), 'kpi_hint' => 'In force today', 'kpi_key' => 'default', 'kpi_href' => site_url('reports/licenses')]) ?>
-    <?= view('components/cards', ['kpi_label' => 'Paid fees (sum)', 'kpi_value' => '$' . number_format((float) (($licRev['paid_sum'] ?? 0)), 2), 'kpi_hint' => 'Portfolio slice', 'kpi_key' => 'default', 'kpi_href' => site_url('reports/licenses')]) ?>
-    <?= view('components/cards', ['kpi_label' => 'Detections in range', 'kpi_value' => $usageReady ? (string) ($usageCount ?? 0) : '—', 'kpi_hint' => 'Usage monitoring', 'kpi_key' => 'default', 'kpi_href' => site_url('reports/usage')]) ?>
-    <?= view('components/cards', ['kpi_label' => 'Cases in range', 'kpi_value' => $casesReady ? (string) ($casesTotal ?? 0) : '—', 'kpi_hint' => 'By case created_at', 'kpi_key' => 'default', 'kpi_href' => site_url('reports/cases')]) ?>
-    <?= view('components/cards', ['kpi_label' => 'Audit actions in range', 'kpi_value' => $auditReady ? (string) ($auditCount ?? 0) : '—', 'kpi_hint' => 'User activity', 'kpi_key' => 'default', 'kpi_href' => site_url('reports/activity')]) ?>
+    <?= view('components/cards', ['kpi_label' => lang('App.reports_kpi_works_total'), 'kpi_value' => (string) ($worksTotal ?? 0), 'kpi_hint' => lang('App.reports_kpi_works_total_hint'), 'kpi_key' => 'default', 'kpi_href' => site_url('works')]) ?>
+    <?= view('components/cards', ['kpi_label' => lang('App.reports_kpi_works_created'), 'kpi_value' => (string) ($worksCreated ?? 0), 'kpi_hint' => lang('App.reports_kpi_works_created_hint'), 'kpi_key' => 'default', 'kpi_href' => site_url('reports/works')]) ?>
+    <?= view('components/cards', ['kpi_label' => lang('App.reports_kpi_lic_active'), 'kpi_value' => (string) (($licSnap['active'] ?? 0)), 'kpi_hint' => lang('App.reports_kpi_lic_active_hint'), 'kpi_key' => 'default', 'kpi_href' => site_url('reports/licenses')]) ?>
+    <?= view('components/cards', ['kpi_label' => lang('App.reports_kpi_paid_fees'), 'kpi_value' => '$' . number_format((float) (($licRev['paid_sum'] ?? 0)), 2), 'kpi_hint' => lang('App.reports_kpi_paid_fees_hint'), 'kpi_key' => 'default', 'kpi_href' => site_url('reports/licenses')]) ?>
+    <?= view('components/cards', ['kpi_label' => lang('App.reports_kpi_detections'), 'kpi_value' => $usageReady ? (string) ($usageCount ?? 0) : '—', 'kpi_hint' => lang('App.reports_kpi_detections_hint'), 'kpi_key' => 'default', 'kpi_href' => site_url('reports/usage')]) ?>
+    <?= view('components/cards', ['kpi_label' => lang('App.reports_kpi_cases_range'), 'kpi_value' => $casesReady ? (string) ($casesTotal ?? 0) : '—', 'kpi_hint' => lang('App.reports_kpi_cases_range_hint'), 'kpi_key' => 'default', 'kpi_href' => site_url('reports/cases')]) ?>
+    <?= view('components/cards', ['kpi_label' => lang('App.reports_kpi_audit_range'), 'kpi_value' => $auditReady ? (string) ($auditCount ?? 0) : '—', 'kpi_hint' => lang('App.reports_kpi_audit_range_hint'), 'kpi_key' => 'default', 'kpi_href' => site_url('reports/activity')]) ?>
 </div>
 
 <div class="card chart-card">
-    <h2 class="card__title">Works created (recent months)</h2>
-    <p class="chart-card__hint">New works per calendar month; span follows your filter window (capped at 12 months).</p>
+    <h2 class="card__title"><?= esc(lang('App.reports_chart_works_created')) ?></h2>
+    <p class="chart-card__hint"><?= esc(lang('App.reports_chart_works_created_hint')) ?></p>
     <div class="chart-canvas-wrap">
-        <canvas id="chartRepOverview" height="220" aria-label="Overview chart" role="img"></canvas>
+        <canvas id="chartRepOverview" height="220" aria-label="<?= esc(lang('App.reports_chart_overview_aria'), 'attr') ?>" role="img"></canvas>
     </div>
 </div>
 
@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', function () {
         data: {
             labels: payload.labels || [],
             datasets: [{
-                label: 'New works',
+                label: <?= json_encode(lang('App.reports_chart_dataset_new_works')) ?>,
                 data: payload.overview || [],
                 borderColor: '#6366f1',
                 backgroundColor: 'rgba(99,102,241,0.15)',

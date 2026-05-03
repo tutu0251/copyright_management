@@ -11,14 +11,14 @@ use CodeIgniter\HTTP\ResponseInterface;
 
 class Licensees extends BaseController
 {
-    protected $helpers = ['form', 'url', 'auth', 'permission', 'nav'];
+    protected $helpers = ['form', 'url', 'auth', 'permission', 'nav', 'locale'];
 
     private function layout(string $view, array $data = []): string
     {
         $user = auth_user();
 
         $defaults = [
-            'pageTitle'   => 'Licensees',
+            'pageTitle'   => lang('App.nav_licensees'),
             'currentPage' => 'licensees',
             'currentUser' => [
                 'name' => $user['display_name'] ?? 'User',
@@ -28,7 +28,7 @@ class Licensees extends BaseController
             'useAuthLogout' => true,
             'useCharts'     => false,
             'chartPayload'  => null,
-            'appCrumb'      => 'Copyright Management · Licensees',
+            'appCrumb'      => lang('App.crumb_licensees'),
         ];
 
         $payload            = array_merge($defaults, $data);

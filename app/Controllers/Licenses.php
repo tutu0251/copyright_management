@@ -14,14 +14,14 @@ use CodeIgniter\HTTP\ResponseInterface;
 
 class Licenses extends BaseController
 {
-    protected $helpers = ['form', 'url', 'auth', 'permission', 'nav'];
+    protected $helpers = ['form', 'url', 'auth', 'permission', 'nav', 'locale'];
 
     private function layout(string $view, array $data = []): string
     {
         $user = auth_user();
 
         $defaults = [
-            'pageTitle'   => 'Licenses',
+            'pageTitle'   => lang('App.nav_licenses'),
             'currentPage' => 'licenses',
             'currentUser' => [
                 'name' => $user['display_name'] ?? 'User',
@@ -31,7 +31,7 @@ class Licenses extends BaseController
             'useAuthLogout' => true,
             'useCharts'     => false,
             'chartPayload'  => null,
-            'appCrumb'      => 'Copyright Management · Licenses',
+            'appCrumb'      => lang('App.crumb_licenses'),
         ];
 
         $payload            = array_merge($defaults, $data);
@@ -61,7 +61,7 @@ class Licenses extends BaseController
         $licensees = model(LicenseeModel::class)->listForSelect();
 
         return $this->layout('licenses/create', [
-            'pageTitle'        => 'Create license',
+            'pageTitle'        => lang('App.license_page_create'),
             'works'            => $works,
             'licensees'        => $licensees,
             'prefillWorkId'    => $workId > 0 ? $workId : null,
@@ -125,7 +125,7 @@ class Licenses extends BaseController
         }
 
         return $this->layout('licenses/show', [
-            'pageTitle'         => 'License #' . $lid,
+            'pageTitle'         => lang('App.license_page_number', ['id' => (string) $lid]),
             'license'           => $row,
             'message'           => session()->getFlashdata('message'),
             'auditHistory'      => $auditHistory,
@@ -150,7 +150,7 @@ class Licenses extends BaseController
         $licensees = model(LicenseeModel::class)->listForSelect();
 
         return $this->layout('licenses/edit', [
-            'pageTitle' => 'Edit license',
+            'pageTitle' => lang('App.license_page_edit'),
             'license'   => $row,
             'works'     => $works,
             'licensees' => $licensees,

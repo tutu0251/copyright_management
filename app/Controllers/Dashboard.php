@@ -13,7 +13,7 @@ use App\Models\WorkModel;
 
 class Dashboard extends BaseController
 {
-    protected $helpers = ['form', 'url', 'auth', 'permission', 'nav'];
+    protected $helpers = ['form', 'url', 'auth', 'permission', 'nav', 'locale'];
 
     private const CHART_MONTHS = 12;
 
@@ -22,7 +22,7 @@ class Dashboard extends BaseController
         $user = auth_user();
 
         $defaults = [
-            'pageTitle'       => 'Dashboard',
+            'pageTitle'       => lang('App.dashboard_title'),
             'currentPage'     => 'dashboard',
             'currentUser'     => [
                 'name' => $user['display_name'] ?? 'User',
@@ -32,7 +32,7 @@ class Dashboard extends BaseController
             'useAuthLogout'   => true,
             'useCharts'       => false,
             'chartPayload'    => null,
-            'appCrumb'        => 'Copyright Management · Signed in',
+            'appCrumb'        => lang('App.crumb_signed_in'),
         ];
 
         $payload            = array_merge($defaults, $data);
@@ -52,7 +52,7 @@ class Dashboard extends BaseController
             $ym    = date('Y-m', strtotime('-' . $i . ' months'));
             $rows[] = [
                 'ym'    => $ym,
-                'label' => date('M Y', strtotime($ym . '-01')),
+                'label' => localized_month_year($ym),
             ];
         }
 
@@ -161,7 +161,7 @@ class Dashboard extends BaseController
                     'work_title'  => (string) ($rr['work_title'] ?? '—'),
                     'source'      => (string) ($rr['detected_source'] ?? ''),
                     'detected_at' => (string) ($rr['detected_at'] ?? ''),
-                    'usage_label' => UsageReportModel::usageTypeLabel($slug),
+                    'usage_label' => localized_usage_type($slug),
                     'usage_tone'  => UsageReportModel::usageTypeBadgeTone($slug),
                 ];
             }
@@ -258,7 +258,7 @@ class Dashboard extends BaseController
         $caseStatusValues = [];
         if ($casesByStatus !== []) {
             foreach (InfringementCaseModel::ALL_STATUSES as $st) {
-                $caseStatusLabels[] = InfringementCaseModel::statusLabel($st);
+                $caseStatusLabels[] = localized_case_status($st);
                 $caseStatusValues[] = $casesByStatus[$st] ?? 0;
             }
         }
@@ -326,79 +326,79 @@ class Dashboard extends BaseController
 
         $primaryStats = [
             [
-                'label' => 'Total works',
+                'label' => lang('App.dashboard_kpi_works_total'),
                 'value' => (string) $worksCount,
-                'hint'  => $workType !== '' ? 'Filtered by work type' : 'Assets in your catalog',
+                'hint'  => $workType !== '' ? lang('App.dashboard_kpi_works_hint_f') : lang('App.dashboard_kpi_works_hint'),
                 'kpi'   => 'works',
                 'kpi_href' => site_url('works'),
             ],
             [
-                'label' => 'Total owners',
+                'label' => lang('App.dashboard_kpi_owners'),
                 'value' => (string) $ownersCount,
-                'hint'  => 'Parties in the registry',
+                'hint'  => lang('App.dashboard_kpi_owners_hint'),
                 'kpi'   => 'owners',
                 'kpi_href' => site_url('owners'),
             ],
             [
-                'label' => 'Total licenses',
+                'label' => lang('App.dashboard_kpi_lic_total'),
                 'value' => (string) $totalLicenses,
-                'hint'  => 'All license records (excluding deleted)',
+                'hint'  => lang('App.dashboard_kpi_lic_total_hint'),
                 'kpi'   => 'lic_total',
                 'kpi_href' => site_url('licenses'),
             ],
             [
-                'label' => 'Active licenses',
+                'label' => lang('App.dashboard_kpi_lic_active'),
                 'value' => (string) $activeLicenses,
-                'hint'  => 'In force (not draft/cancelled, not past end date)',
+                'hint'  => lang('App.dashboard_kpi_lic_active_hint'),
                 'kpi'   => 'lic_active',
                 'kpi_href' => site_url('licenses'),
             ],
             [
-                'label' => 'Expiring within 30 days',
+                'label' => lang('App.dashboard_kpi_lic_exp'),
                 'value' => (string) $expiringLicenses30,
-                'hint'  => 'End date in the next month',
+                'hint'  => lang('App.dashboard_kpi_lic_exp_hint'),
                 'kpi'   => 'lic_exp',
                 'kpi_href' => site_url('licenses'),
             ],
             [
-                'label' => 'Total revenue (paid fees)',
+                'label' => lang('App.dashboard_kpi_lic_rev'),
                 'value' => '$' . number_format($licenseRevenue, 2),
-                'hint'  => 'Sum of fee where payment is paid',
+                'hint'  => lang('App.dashboard_kpi_lic_rev_hint'),
                 'kpi'   => 'lic_rev',
                 'kpi_href' => site_url('licenses'),
             ],
             [
-                'label' => 'Unpaid license fees',
+                'label' => lang('App.dashboard_kpi_lic_unpaid'),
                 'value' => '$' . number_format($licenseUnpaid, 2),
-                'hint'  => 'Unpaid or partial payment',
+                'hint'  => lang('App.dashboard_kpi_lic_unpaid_hint'),
                 'kpi'   => 'lic_unpaid',
                 'kpi_href' => site_url('licenses'),
             ],
             [
-                'label' => 'Usage reports (total)',
+                'label' => lang('App.dashboard_kpi_usage_total'),
                 'value' => (string) $usageTotal,
-                'hint'  => 'Monitoring entries on file',
+                'hint'  => lang('App.dashboard_kpi_usage_total_hint'),
                 'kpi'   => 'usage_total',
                 'kpi_href' => site_url('usage-reports'),
             ],
             [
-                'label' => 'Infringement reports',
+                'label' => lang('App.dashboard_kpi_usage_inf'),
                 'value' => (string) $usageInfringement,
-                'hint'  => 'Usage reports flagged as infringement',
+                'hint'  => lang('App.dashboard_kpi_usage_inf_hint'),
                 'kpi'   => 'usage_infringement',
                 'kpi_href' => site_url('usage-reports?usage_type=infringement'),
             ],
             [
-                'label' => 'Open cases',
+                'label' => lang('App.dashboard_kpi_cases_open'),
                 'value' => (string) $openCases,
-                'hint'  => 'Infringement cases not resolved or rejected',
+                'hint'  => lang('App.dashboard_kpi_cases_open_hint'),
                 'kpi'   => 'cases_open',
                 'kpi_href' => site_url('cases'),
             ],
             [
-                'label' => 'Resolved cases',
+                'label' => lang('App.dashboard_kpi_cases_resolved'),
                 'value' => (string) $resolvedCases,
-                'hint'  => 'Cases marked resolved',
+                'hint'  => lang('App.dashboard_kpi_cases_resolved_hint'),
                 'kpi'   => 'cases_resolved',
                 'kpi_href' => site_url('cases?case_status=resolved'),
             ],
@@ -406,37 +406,37 @@ class Dashboard extends BaseController
 
         $extraStats = [
             [
-                'label' => 'Total infringement cases',
+                'label' => lang('App.dashboard_kpi_cases_total'),
                 'value' => (string) $totalCases,
-                'hint'  => 'All case records',
+                'hint'  => lang('App.dashboard_kpi_cases_total_hint'),
                 'kpi'   => 'cases_total',
                 'kpi_href' => site_url('cases'),
             ],
             [
-                'label' => 'High-priority open cases',
+                'label' => lang('App.dashboard_kpi_cases_high'),
                 'value' => (string) $highPriOpen,
-                'hint'  => 'Open cases marked high or critical',
+                'hint'  => lang('App.dashboard_kpi_cases_high_hint'),
                 'kpi'   => 'cases_high',
                 'kpi_href' => site_url('cases'),
             ],
             [
-                'label' => 'Suspected usage',
+                'label' => lang('App.dashboard_kpi_usage_suspected'),
                 'value' => (string) $usageSuspected,
-                'hint'  => 'Reports flagged as suspected',
+                'hint'  => lang('App.dashboard_kpi_usage_suspected_hint'),
                 'kpi'   => 'usage_suspected',
                 'kpi_href' => site_url('usage-reports?usage_type=suspected'),
             ],
             [
-                'label' => 'Works with multiple owners',
+                'label' => lang('App.dashboard_kpi_multi_owners'),
                 'value' => (string) $worksMultiOwners,
-                'hint'  => 'More than one linked owner',
+                'hint'  => lang('App.dashboard_kpi_multi_owners_hint'),
                 'kpi'   => 'multi',
                 'kpi_href' => site_url('works'),
             ],
             [
-                'label' => 'Works without owner link',
+                'label' => lang('App.dashboard_kpi_no_owner'),
                 'value' => (string) $worksWithoutOwner,
-                'hint'  => 'No work_owners rows yet',
+                'hint'  => lang('App.dashboard_kpi_no_owner_hint'),
                 'kpi'   => 'noowner',
                 'kpi_href' => site_url('works'),
             ],
@@ -444,23 +444,23 @@ class Dashboard extends BaseController
 
         if ($auditFeedLive) {
             $extraStats[] = [
-                'label' => 'Audit events today',
+                'label' => lang('App.dashboard_kpi_audit_today'),
                 'value' => (string) $auditTodayCount,
-                'hint'  => 'Since midnight (all users)',
+                'hint'  => lang('App.dashboard_kpi_audit_today_hint'),
                 'kpi'   => 'audit_today',
                 'kpi_href' => site_url('activities'),
             ];
             $extraStats[] = [
-                'label' => 'Most active users today',
+                'label' => lang('App.dashboard_kpi_audit_top'),
                 'value' => $auditTopLabel,
-                'hint'  => 'Top three by audit count',
+                'hint'  => lang('App.dashboard_kpi_audit_top_hint'),
                 'kpi'   => 'audit_top',
                 'kpi_href' => site_url('activities'),
             ];
         }
 
         return $this->layout('dashboard/index', [
-            'pageTitle'             => 'Dashboard',
+            'pageTitle'             => lang('App.dashboard_title'),
             'stats'                 => $primaryStats,
             'extraStats'            => $extraStats,
             'useCharts'             => true,

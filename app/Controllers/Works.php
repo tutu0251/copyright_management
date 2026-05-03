@@ -17,7 +17,7 @@ use CodeIgniter\HTTP\ResponseInterface;
 
 class Works extends BaseController
 {
-    protected $helpers = ['form', 'url', 'auth', 'permission', 'nav'];
+    protected $helpers = ['form', 'url', 'auth', 'permission', 'nav', 'locale'];
 
     /** Maximum total upload payload per request (bytes). */
     private const UPLOAD_MAX_BYTES = 10_485_760; // 10 MiB
@@ -35,7 +35,7 @@ class Works extends BaseController
         $user = auth_user();
 
         $defaults = [
-            'pageTitle'       => 'Assets',
+            'pageTitle'       => lang('App.nav_assets'),
             'currentPage'     => 'assets',
             'currentUser'     => [
                 'name' => $user['display_name'] ?? 'User',
@@ -45,7 +45,7 @@ class Works extends BaseController
             'useAuthLogout'   => true,
             'useCharts'       => false,
             'chartPayload'    => null,
-            'appCrumb'        => 'Copyright Management · Asset registry',
+            'appCrumb'        => lang('App.crumb_asset_registry'),
         ];
 
         $payload            = array_merge($defaults, $data);

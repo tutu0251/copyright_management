@@ -18,7 +18,7 @@ $err = session()->getFlashdata('errors');
     </div>
 <?php endif; ?>
 
-<p class="page-intro">Manage legal parties (people, companies, or organizations) that you attach to catalog works with roles and percentages.</p>
+<p class="page-intro"><?= esc(lang('App.owners_intro')) ?></p>
 
 <div class="toolbar">
     <div class="toolbar__left toolbar__grow">

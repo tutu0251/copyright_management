@@ -23,38 +23,38 @@ $err = session()->getFlashdata('errors');
 
 <?php if ($migrationRequired) : ?>
     <div class="card" style="margin-bottom: 1rem; border-color: var(--cm-warning, #a73);">
-        <h2 class="card__title">Database migration needed</h2>
-        <p class="muted" style="margin:0;">Run <code>php spark migrate</code> from the project root to enable infringement case management (Step&nbsp;6).</p>
+        <h2 class="card__title"><?= esc(lang('App.cases_migration_title')) ?></h2>
+        <p class="muted" style="margin:0;"><?= lang('App.cases_migration_body') ?></p>
     </div>
 <?php endif; ?>
 
-<p class="page-intro">Legal workflow for suspected or confirmed misuse — from detection through resolution.</p>
+<p class="page-intro"><?= esc(lang('App.cases_intro')) ?></p>
 
 <div class="toolbar">
     <div class="toolbar__left toolbar__grow">
         <form class="toolbar__grow" method="get" action="<?= esc(site_url('cases'), 'attr') ?>" style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;">
-            <input class="input toolbar__search" type="search" name="q" value="<?= esc($searchQuery, 'attr') ?>" placeholder="Search title, work, description…" aria-label="Search cases">
-            <select class="select" name="case_status" aria-label="Filter by status">
-                <option value="">All statuses</option>
+            <input class="input toolbar__search" type="search" name="q" value="<?= esc($searchQuery, 'attr') ?>" placeholder="<?= esc(lang('App.cases_search_placeholder'), 'attr') ?>" aria-label="<?= esc(lang('App.cases_search_aria'), 'attr') ?>">
+            <select class="select" name="case_status" aria-label="<?= esc(lang('App.cases_filter_status_aria'), 'attr') ?>">
+                <option value=""><?= esc(lang('App.cases_all_statuses')) ?></option>
                 <?php foreach (\App\Models\InfringementCaseModel::ALL_STATUSES as $st) : ?>
-                    <option value="<?= esc($st, 'attr') ?>" <?= $statusFilter === $st ? 'selected' : '' ?>><?= esc(\App\Models\InfringementCaseModel::statusLabel($st)) ?></option>
+                    <option value="<?= esc($st, 'attr') ?>" <?= $statusFilter === $st ? 'selected' : '' ?>><?= esc(localized_case_status($st)) ?></option>
                 <?php endforeach; ?>
             </select>
-            <select class="select" name="priority" aria-label="Filter by priority">
-                <option value="">All priorities</option>
+            <select class="select" name="priority" aria-label="<?= esc(lang('App.cases_filter_priority_aria'), 'attr') ?>">
+                <option value=""><?= esc(lang('App.cases_all_priorities')) ?></option>
                 <?php foreach (\App\Models\InfringementCaseModel::PRIORITIES as $pr) : ?>
-                    <option value="<?= esc($pr, 'attr') ?>" <?= $priorityFilter === $pr ? 'selected' : '' ?>><?= esc(\App\Models\InfringementCaseModel::priorityLabel($pr)) ?></option>
+                    <option value="<?= esc($pr, 'attr') ?>" <?= $priorityFilter === $pr ? 'selected' : '' ?>><?= esc(localized_case_priority($pr)) ?></option>
                 <?php endforeach; ?>
             </select>
-            <button type="submit" class="btn btn--secondary btn--sm">Apply</button>
+            <button type="submit" class="btn btn--secondary btn--sm"><?= esc(lang('App.action_apply')) ?></button>
             <?php if ($searchQuery !== '' || $statusFilter !== '' || $priorityFilter !== '') : ?>
-                <a class="btn btn--ghost btn--sm" href="<?= site_url('cases') ?>">Clear</a>
+                <a class="btn btn--ghost btn--sm" href="<?= site_url('cases') ?>"><?= esc(lang('App.action_clear')) ?></a>
             <?php endif; ?>
         </form>
     </div>
     <div class="toolbar__right">
         <?php if (user_can('cases.create')) : ?>
-            <a class="btn btn--primary" href="<?= site_url('cases/create') ?>">Open case</a>
+            <a class="btn btn--primary" href="<?= site_url('cases/create') ?>"><?= esc(lang('App.cases_open_case')) ?></a>
         <?php endif; ?>
     </div>
 </div>
@@ -63,11 +63,11 @@ $err = session()->getFlashdata('errors');
     <table class="data-table">
         <thead>
             <tr>
-                <th>Title</th>
-                <th>Work</th>
-                <th>Status</th>
-                <th>Priority</th>
-                <th>Assignee</th>
+                <th><?= esc(lang('App.cases_col_title')) ?></th>
+                <th><?= esc(lang('App.cases_col_work')) ?></th>
+                <th><?= esc(lang('App.cases_col_status')) ?></th>
+                <th><?= esc(lang('App.cases_col_priority')) ?></th>
+                <th><?= esc(lang('App.cases_col_assignee')) ?></th>
                 <th>Opened</th>
                 <th></th>
             </tr>

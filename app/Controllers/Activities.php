@@ -8,7 +8,7 @@ use App\Models\AuditLogModel;
 
 class Activities extends BaseController
 {
-    protected $helpers = ['form', 'url', 'auth', 'permission', 'nav'];
+    protected $helpers = ['form', 'url', 'auth', 'permission', 'nav', 'locale'];
 
     private const PER_PAGE = 50;
 
@@ -17,7 +17,7 @@ class Activities extends BaseController
         $user = auth_user();
 
         $defaults = [
-            'pageTitle'     => 'Activity',
+            'pageTitle'     => lang('App.nav_activities'),
             'currentPage'   => 'activities',
             'currentUser'   => [
                 'name' => $user['display_name'] ?? 'User',
@@ -27,7 +27,7 @@ class Activities extends BaseController
             'useAuthLogout' => true,
             'useCharts'     => false,
             'chartPayload'  => null,
-            'appCrumb'      => 'Copyright Management · Audit log',
+            'appCrumb'      => lang('App.crumb_audit_log'),
         ];
 
         $payload            = array_merge($defaults, $data);
@@ -40,7 +40,7 @@ class Activities extends BaseController
     {
         if (! AuditLogModel::schemaReady()) {
             return $this->layout('activities/index', [
-                'pageTitle'         => 'Activity',
+                'pageTitle'         => lang('App.nav_activities'),
                 'migrationRequired' => true,
                 'rows'               => [],
                 'pager'              => ['page' => 1, 'perPage' => self::PER_PAGE, 'total' => 0, 'totalPages' => 1],
@@ -92,7 +92,7 @@ class Activities extends BaseController
         $totalPages = max(1, (int) ceil($total / self::PER_PAGE));
 
         return $this->layout('activities/index', [
-            'pageTitle'         => 'Activity',
+            'pageTitle'         => lang('App.nav_activities'),
             'migrationRequired' => false,
             'rows'               => $viewRows,
             'pager'              => [

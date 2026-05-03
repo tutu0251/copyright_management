@@ -11,12 +11,12 @@ use Config\Validation;
 
 class Auth extends BaseController
 {
-    protected $helpers = ['form', 'url', 'auth'];
+    protected $helpers = ['form', 'url', 'auth', 'locale'];
 
     public function login()
     {
         return view('auth/login', [
-            'pageTitle' => 'Sign in',
+            'pageTitle' => lang('App.auth_page_title'),
             'error'     => session()->getFlashdata('error'),
             'message'   => session()->getFlashdata('message'),
         ]);
@@ -28,7 +28,7 @@ class Auth extends BaseController
         $rulesConfig = config(Validation::class);
 
         if (! $this->validate($rulesConfig->login)) {
-            return redirect()->back()->withInput()->with('error', 'Enter a valid email and password.');
+            return redirect()->back()->withInput()->with('error', lang('App.auth_error_validation'));
         }
 
         $email    = strtolower(trim((string) $this->request->getPost('email')));
@@ -37,7 +37,7 @@ class Auth extends BaseController
         $userModel = new UserModel();
         $found     = $userModel->findActiveWithRolesByEmail($email);
         if ($found === null || ! $userModel->verifyPassword($password, $found['user']['password_hash'])) {
-            return redirect()->back()->withInput()->with('error', 'Invalid credentials.');
+            return redirect()->back()->withInput()->with('error', lang('App.auth_error_credentials'));
         }
 
         $slugs = array_values(array_filter(array_map(static fn ($r) => (string) ($r['slug'] ?? ''), $found['roles'])));
@@ -96,6 +96,6 @@ class Auth extends BaseController
         ]);
         $session->regenerate(true);
 
-        return redirect()->to(site_url('login'))->with('message', 'You have been signed out.');
+        return redirect()->to(site_url('login'))->with('message', lang('App.auth_signed_out'));
     }
 }

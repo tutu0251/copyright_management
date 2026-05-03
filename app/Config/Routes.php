@@ -10,6 +10,8 @@ $routes->get('/', static function () {
     return redirect()->to(site_url('dashboard'));
 });
 
+$routes->get('lang/(:segment)', 'Language::set/$1');
+
 $routes->group('', ['filter' => 'guest'], static function ($routes) {
     $routes->get('login', 'Auth::login');
     $routes->post('login', 'Auth::attemptLogin');

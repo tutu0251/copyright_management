@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="<?= esc(service('request')->getLocale(), 'attr') ?>" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= esc($pageTitle) ?> — Copyright Management</title>
+    <title><?= esc($pageTitle) ?> — <?= esc(lang('App.meta_title_suffix')) ?></title>
     <script>
     (function () {
         try {
@@ -22,11 +22,21 @@
                     <div class="app-brand" style="margin-bottom: 0.5rem;">
                         <span class="app-brand__mark">CM</span>
                         <div>
-                            <div class="app-brand__name">Copyright Manager</div>
-                            <div class="app-brand__tag muted">Sign in</div>
+                            <div class="app-brand__name"><?= esc(lang('App.brand_name')) ?></div>
+                            <div class="app-brand__tag muted"><?= esc(lang('App.brand_tag_signin')) ?></div>
                         </div>
                     </div>
-                    <p class="muted" style="margin: 0;">Use your account to open the live dashboard.</p>
+                    <p class="muted" style="margin: 0;"><?= esc(lang('App.auth_intro')) ?></p>
+                </div>
+
+                <div style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                    <label for="login-lang" class="muted" style="font-size: 0.85rem;"><?= esc(lang('App.topbar_language')) ?></label>
+                    <select id="login-lang" class="input-like" style="padding:0.35rem 0.5rem;border-radius:8px;border:1px solid var(--border, #334155);background:var(--surface, #0f172a);color:inherit;font-size:0.85rem;"
+                            onchange="if(this.value) window.location.href=this.value;">
+                        <?php $loc = service('request')->getLocale(); ?>
+                        <option value="<?= esc(current_lang_url('en'), 'attr') ?>" <?= $loc === 'en' ? 'selected' : '' ?>><?= esc(lang('App.lang_english')) ?></option>
+                        <option value="<?= esc(current_lang_url('ja'), 'attr') ?>" <?= $loc === 'ja' ? 'selected' : '' ?>><?= esc(lang('App.lang_japanese')) ?></option>
+                    </select>
                 </div>
 
                 <?php if (! empty($error)) : ?>
@@ -38,20 +48,21 @@
 
                 <?= form_open(site_url('login'), ['class' => 'stack', 'style' => 'gap: 0.85rem;']) ?>
                     <div>
-                        <label for="email" class="muted" style="display: block; margin-bottom: 0.35rem;">Email</label>
+                        <label for="email" class="muted" style="display: block; margin-bottom: 0.35rem;"><?= esc(lang('App.auth_email')) ?></label>
                         <input type="email" name="email" id="email" class="app-topbar__search-input" style="width: 100%;"
                                value="<?= esc(old('email') ?? '') ?>" autocomplete="username" required>
                     </div>
                     <div>
-                        <label for="password" class="muted" style="display: block; margin-bottom: 0.35rem;">Password</label>
+                        <label for="password" class="muted" style="display: block; margin-bottom: 0.35rem;"><?= esc(lang('App.auth_password')) ?></label>
                         <input type="password" name="password" id="password" class="app-topbar__search-input" style="width: 100%;"
                                autocomplete="current-password" required>
                     </div>
-                    <button type="submit" class="btn btn--primary" style="width: 100%;">Sign in</button>
+                    <button type="submit" class="btn btn--primary" style="width: 100%;"><?= esc(lang('App.auth_sign_in')) ?></button>
                 <?= form_close() ?>
 
                 <p class="muted" style="margin: 1rem 0 0; font-size: 0.85rem;">
-                    UI mockup remains available at <a href="<?= site_url('mockup') ?>"><?= site_url('mockup') ?></a>.
+                    <?= esc(lang('App.auth_mockup_prefix')) ?>
+                    <a href="<?= site_url('mockup') ?>"><?= esc(site_url('mockup')) ?></a>.
                 </p>
             </div>
         </main>

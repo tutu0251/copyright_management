@@ -7,17 +7,17 @@ $msg = session()->getFlashdata('message');
     <p class="muted" role="status"><?= esc($msg) ?></p>
 <?php endif; ?>
 
-<p class="page-intro">Each user inherits permissions from their assigned roles. Use <strong>Edit permissions</strong> to attach or detach capabilities for a role.</p>
+<p class="page-intro"><?= lang('App.settings_roles_intro') ?></p>
 
 <div class="card">
-    <h2 class="card__title">Roles</h2>
+    <h2 class="card__title"><?= esc(lang('App.settings_roles_card')) ?></h2>
     <div class="table-wrap">
         <table class="data-table">
             <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>Slug</th>
-                    <th>Permissions</th>
+                    <th><?= esc(lang('App.settings_roles_col_name')) ?></th>
+                    <th><?= esc(lang('App.settings_roles_col_slug')) ?></th>
+                    <th><?= esc(lang('App.settings_roles_col_permissions')) ?></th>
                     <th></th>
                 </tr>
             </thead>
@@ -32,7 +32,7 @@ $msg = session()->getFlashdata('message');
                         <td><code><?= esc((string) ($r['slug'] ?? '')) ?></code></td>
                         <td><?= (int) $row['permission_count'] ?></td>
                         <td style="text-align:right;">
-                            <a class="btn btn--secondary btn--sm" href="<?= site_url('settings/roles/' . $rid . '/permissions') ?>">Edit permissions</a>
+                            <a class="btn btn--secondary btn--sm" href="<?= site_url('settings/roles/' . $rid . '/permissions') ?>"><?= esc(lang('App.settings_roles_edit')) ?></a>
                         </td>
                     </tr>
                 <?php endforeach; ?>

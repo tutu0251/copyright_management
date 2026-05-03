@@ -13,14 +13,14 @@ use CodeIgniter\HTTP\ResponseInterface;
 
 class WorkOwners extends BaseController
 {
-    protected $helpers = ['form', 'url', 'auth', 'permission', 'nav'];
+    protected $helpers = ['form', 'url', 'auth', 'permission', 'nav', 'locale'];
 
     private function layout(string $view, array $data = []): string
     {
         $user = auth_user();
 
         $defaults = [
-            'pageTitle'   => 'Work owners',
+            'pageTitle'   => lang('App.work_owners_page_default'),
             'currentPage' => 'assets',
             'currentUser' => [
                 'name' => $user['display_name'] ?? 'User',
@@ -30,7 +30,7 @@ class WorkOwners extends BaseController
             'useAuthLogout' => true,
             'useCharts'     => false,
             'chartPayload'  => null,
-            'appCrumb'      => 'Copyright Management · Ownership',
+            'appCrumb'      => lang('App.crumb_ownership'),
         ];
 
         $payload            = array_merge($defaults, $data);
@@ -64,7 +64,7 @@ class WorkOwners extends BaseController
         ));
 
         return $this->layout('works/owners', [
-            'pageTitle'    => 'Ownership · ' . (string) $workRow['title'],
+            'pageTitle'    => lang('App.work_owners_page_for', ['title' => (string) $workRow['title']]),
             'work'         => $workRow,
             'links'        => $links,
             'pickOwners'   => $pickOwners,

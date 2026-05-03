@@ -29,7 +29,7 @@ $errs = session()->getFlashdata('errors');
     </div>
 <?php endif; ?>
 
-<p class="page-intro">Manual detections of catalog works appearing online or elsewhere.</p>
+<p class="page-intro"><?= esc(lang('App.usage_reports_intro')) ?></p>
 
 <div class="toolbar">
     <div class="toolbar__left toolbar__grow">

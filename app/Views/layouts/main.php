@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="<?= esc(service('request')->getLocale(), 'attr') ?>" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= esc($pageTitle) ?> — Copyright Management</title>
+    <title><?= esc($pageTitle) ?> — <?= esc(lang('App.meta_title_suffix')) ?></title>
     <script>
     (function () {
         try {
@@ -28,7 +28,7 @@
             <?= $this->include('layouts/topbar') ?>
             <div class="app-page-head">
                 <h1 class="app-page-head__title"><?= esc($pageTitle) ?></h1>
-                <p class="app-page-head__crumb muted"><?= esc($appCrumb ?? 'Copyright Management') ?></p>
+                <p class="app-page-head__crumb muted"><?= esc($appCrumb ?? lang('App.meta_title_suffix')) ?></p>
             </div>
             <main class="app-content" id="main-content">
                 <?= $content ?>
@@ -40,15 +40,15 @@
         <div class="ui-modal__backdrop" data-modal-close></div>
         <div class="ui-modal__panel" role="dialog" aria-modal="true" aria-labelledby="ui-modal-title">
             <div class="ui-modal__head">
-                <h2 class="ui-modal__title" id="ui-modal-title">Quick action</h2>
-                <button type="button" class="ui-icon-btn" data-modal-close aria-label="Close">&times;</button>
+                <h2 class="ui-modal__title" id="ui-modal-title"><?= esc(lang('App.modal_quick_action')) ?></h2>
+                <button type="button" class="ui-icon-btn" data-modal-close aria-label="<?= esc(lang('App.modal_close'), 'attr') ?>">&times;</button>
             </div>
             <div class="ui-modal__body" id="ui-modal-body">
-                <p class="muted">Placeholder — backend will submit forms here.</p>
+                <p class="muted"><?= esc(lang('App.modal_placeholder')) ?></p>
             </div>
             <div class="ui-modal__foot">
-                <button type="button" class="btn btn--secondary" data-modal-close>Cancel</button>
-                <button type="button" class="btn btn--primary" id="ui-modal-confirm" disabled>Confirm (mock)</button>
+                <button type="button" class="btn btn--secondary" data-modal-close><?= esc(lang('App.modal_cancel')) ?></button>
+                <button type="button" class="btn btn--primary" id="ui-modal-confirm" disabled><?= esc(lang('App.modal_confirm_mock')) ?></button>
             </div>
         </div>
     </div>

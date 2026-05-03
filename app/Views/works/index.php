@@ -15,23 +15,23 @@ $warn = session()->getFlashdata('warning');
     <p class="muted" role="status"><?= esc($warn) ?></p>
 <?php endif; ?>
 
-<p class="page-intro">Browse registered works in your catalog. Search filters the list; pagination keeps large libraries manageable.</p>
+<p class="page-intro"><?= esc(lang('App.works_intro')) ?></p>
 
 <div class="toolbar">
     <div class="toolbar__left toolbar__grow">
         <?= form_open(site_url('works'), ['method' => 'get', 'class' => 'toolbar__grow', 'style' => 'display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;']) ?>
-            <input class="input toolbar__search" type="search" name="q" value="<?= esc($searchQuery, 'attr') ?>" placeholder="Search title, creator, owner…" aria-label="Search works">
-            <button type="submit" class="btn btn--secondary btn--sm">Search</button>
+            <input class="input toolbar__search" type="search" name="q" value="<?= esc($searchQuery, 'attr') ?>" placeholder="<?= esc(lang('App.works_search_placeholder'), 'attr') ?>" aria-label="<?= esc(lang('App.works_search_aria'), 'attr') ?>">
+            <button type="submit" class="btn btn--secondary btn--sm"><?= esc(lang('App.action_search')) ?></button>
             <?php if ($searchQuery !== '') : ?>
-                <a class="btn btn--ghost btn--sm" href="<?= site_url('works') ?>">Clear</a>
+                <a class="btn btn--ghost btn--sm" href="<?= site_url('works') ?>"><?= esc(lang('App.action_clear')) ?></a>
             <?php endif; ?>
         <?= form_close() ?>
     </div>
     <div class="toolbar__right">
         <?php if (user_can('works.create')) : ?>
-            <a class="btn btn--primary" href="<?= site_url('works/create') ?>">Register work</a>
+            <a class="btn btn--primary" href="<?= site_url('works/create') ?>"><?= esc(lang('App.action_register_work')) ?></a>
         <?php endif; ?>
-        <button type="button" class="btn btn--secondary" disabled title="Export not wired yet">Export CSV</button>
+        <button type="button" class="btn btn--secondary" disabled title="<?= esc(lang('App.action_export_csv_disabled'), 'attr') ?>"><?= esc(lang('App.action_export_csv')) ?></button>
     </div>
 </div>
 
@@ -39,23 +39,23 @@ $warn = session()->getFlashdata('warning');
 <table class="data-table">
     <thead>
         <tr>
-            <th>Work ID</th>
-            <th>Title</th>
-            <th>Type</th>
-            <th>Creator</th>
-            <th>Owner</th>
-            <th>Registered</th>
-            <th>Status</th>
-            <th>Licenses</th>
-            <th>Risk</th>
-            <th>Updated</th>
+            <th><?= esc(lang('App.works_col_id')) ?></th>
+            <th><?= esc(lang('App.works_col_title')) ?></th>
+            <th><?= esc(lang('App.works_col_type')) ?></th>
+            <th><?= esc(lang('App.works_col_creator')) ?></th>
+            <th><?= esc(lang('App.works_col_owner')) ?></th>
+            <th><?= esc(lang('App.works_col_registered')) ?></th>
+            <th><?= esc(lang('App.works_col_status')) ?></th>
+            <th><?= esc(lang('App.works_col_licenses')) ?></th>
+            <th><?= esc(lang('App.works_col_risk')) ?></th>
+            <th><?= esc(lang('App.works_col_updated')) ?></th>
             <th></th>
         </tr>
     </thead>
     <tbody>
         <?php if (($works ?? []) === []) : ?>
             <tr>
-                <td colspan="11" class="muted">No works match your criteria. Register a work or adjust your search.</td>
+                <td colspan="11" class="muted"><?= esc(lang('App.works_empty')) ?></td>
             </tr>
         <?php else : ?>
             <?php foreach ($works as $w) : ?>
@@ -83,7 +83,7 @@ $warn = session()->getFlashdata('warning');
                     </td>
                     <td><?= esc($w['last_updated']) ?></td>
                     <td class="table-actions">
-                        <a class="btn btn--ghost btn--sm" href="<?= site_url('works/' . $w['work_id']) ?>">View</a>
+                        <a class="btn btn--ghost btn--sm" href="<?= site_url('works/' . $w['work_id']) ?>"><?= esc(lang('App.action_view')) ?></a>
                     </td>
                 </tr>
             <?php endforeach; ?>
@@ -102,18 +102,18 @@ $pageHref = function (int $p) use ($searchQuery): string {
     return site_url('works?' . http_build_query($q));
 };
 ?>
-<div class="pager" role="navigation" aria-label="Pagination">
-    <span class="pager__meta">Page <?= esc((string) $pg) ?> of <?= esc((string) $totalPages) ?> · <?= esc((string) $total) ?> assets</span>
+<div class="pager" role="navigation" aria-label="<?= esc(lang('App.works_pagination_aria'), 'attr') ?>">
+    <span class="pager__meta"><?= esc(lang('App.works_page', ['page' => (string) $pg, 'pages' => (string) $totalPages, 'count' => (string) $total])) ?></span>
     <div class="pager__buttons">
         <?php if ($pg > 1) : ?>
-            <a class="btn btn--secondary btn--sm" href="<?= esc($pageHref($pg - 1), 'url') ?>">Previous</a>
+            <a class="btn btn--secondary btn--sm" href="<?= esc($pageHref($pg - 1), 'url') ?>"><?= esc(lang('App.table_pagination_prev')) ?></a>
         <?php else : ?>
-            <button type="button" class="btn btn--secondary btn--sm" disabled>Previous</button>
+            <button type="button" class="btn btn--secondary btn--sm" disabled><?= esc(lang('App.table_pagination_prev')) ?></button>
         <?php endif; ?>
         <?php if ($pg < $totalPages) : ?>
-            <a class="btn btn--secondary btn--sm" href="<?= esc($pageHref($pg + 1), 'url') ?>">Next</a>
+            <a class="btn btn--secondary btn--sm" href="<?= esc($pageHref($pg + 1), 'url') ?>"><?= esc(lang('App.table_pagination_next')) ?></a>
         <?php else : ?>
-            <button type="button" class="btn btn--secondary btn--sm" disabled>Next</button>
+            <button type="button" class="btn btn--secondary btn--sm" disabled><?= esc(lang('App.table_pagination_next')) ?></button>
         <?php endif; ?>
     </div>
 </div>

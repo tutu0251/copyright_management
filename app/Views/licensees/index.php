@@ -18,7 +18,7 @@ $err = session()->getFlashdata('errors');
     </div>
 <?php endif; ?>
 
-<p class="page-intro">Parties that receive rights under your licenses (people, companies, or organizations).</p>
+<p class="page-intro"><?= esc(lang('App.licensees_intro')) ?></p>
 
 <div class="toolbar">
     <div class="toolbar__left toolbar__grow">

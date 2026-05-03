@@ -14,6 +14,7 @@ use CodeIgniter\Filters\PerformanceMetrics;
 use CodeIgniter\Filters\SecureHeaders;
 use App\Filters\AuthFilter;
 use App\Filters\GuestFilter;
+use App\Filters\LocaleFilter;
 use App\Filters\PermissionFilter;
 
 class Filters extends BaseFilters
@@ -30,6 +31,7 @@ class Filters extends BaseFilters
     public array $aliases = [
         'auth'          => AuthFilter::class,
         'guest'         => GuestFilter::class,
+        'locale'        => LocaleFilter::class,
         'permission'    => PermissionFilter::class,
         'csrf'          => CSRF::class,
         'toolbar'       => DebugToolbar::class,
@@ -78,6 +80,7 @@ class Filters extends BaseFilters
      */
     public array $globals = [
         'before' => [
+            'locale',
             'csrf',
             // 'honeypot',
             // 'invalidchars',
