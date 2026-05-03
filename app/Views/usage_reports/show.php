@@ -96,9 +96,11 @@ $id = (int) ($report['id'] ?? 0);
         <?= form_open(site_url('usage-reports/' . $id . '/mark-infringement'), ['style' => 'display:inline;']) ?>
             <button type="submit" class="btn btn--secondary btn--sm" <?= ($report['usage_type'] ?? '') === 'infringement' ? 'disabled' : '' ?>>Mark infringement</button>
         <?= form_close() ?>
-        <?= form_open(site_url('usage-reports/' . $id . '/escalate-case'), ['style' => 'display:inline;']) ?>
-            <button type="submit" class="btn btn--primary btn--sm">Escalate to case</button>
-        <?= form_close() ?>
+        <?php if (! empty($report['infringement_case_id'])) : ?>
+            <a class="btn btn--primary btn--sm" href="<?= site_url('cases/' . (int) $report['infringement_case_id']) ?>">View case</a>
+        <?php else : ?>
+            <a class="btn btn--primary btn--sm" href="<?= site_url('cases/create?usage_report_id=' . $id) ?>">Create case</a>
+        <?php endif; ?>
     </div>
-    <p class="muted" style="margin:0.75rem 0 0;font-size:0.85rem;">Escalation workflow will connect to infringement cases in Step&nbsp;6.</p>
+    <p class="muted" style="margin:0.75rem 0 0;font-size:0.85rem;">Opening a case links this usage report and blocks duplicate cases for the same report.</p>
 </div>

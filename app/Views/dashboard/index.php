@@ -114,6 +114,45 @@
 <?php
 $recentUsageDetections = $recentUsageDetections ?? [];
 ?>
+<?php
+$caseStatusBreakdown = $caseStatusBreakdown ?? [];
+$casesSchemaOk = $casesSchemaOk ?? false;
+?>
+<?php if ($casesSchemaOk && $caseStatusBreakdown !== []) : ?>
+    <div class="card" style="margin-top: 1.25rem;">
+        <h2 class="card__title">Cases by status</h2>
+        <p class="muted" style="margin-top: 0;">Live counts from your infringement case registry (chart-ready payload is also in <code>chartPayload.caseStatusLabels</code> / <code>caseStatusValues</code>).</p>
+        <div class="table-wrap table-wrap--flush">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Count</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach (\App\Models\InfringementCaseModel::ALL_STATUSES as $st) : ?>
+                        <?php $cnt = (int) ($caseStatusBreakdown[$st] ?? 0); ?>
+                        <tr>
+                            <td><?= esc(\App\Models\InfringementCaseModel::statusLabel($st)) ?></td>
+                            <td>
+                                <?php if ($cnt > 0) : ?>
+                                    <a href="<?= site_url('cases') ?>?case_status=<?= esc($st, 'url') ?>"><?= esc((string) $cnt) ?></a>
+                                <?php else : ?>
+                                    <?= esc((string) $cnt) ?>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <div style="margin-top: 0.85rem;">
+            <a class="btn btn--ghost btn--sm" href="<?= site_url('cases') ?>">Open cases</a>
+        </div>
+    </div>
+<?php endif; ?>
+
 <?php if ($recentUsageDetections !== []) : ?>
     <div class="card" style="margin-top: 1.25rem;">
         <h2 class="card__title">Recent usage detections (7 days)</h2>

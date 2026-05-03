@@ -33,7 +33,7 @@ class UsageReports extends BaseController
             ['id' => 'licensees', 'label' => 'Licensees', 'path' => 'licensees'],
             ['id' => 'licenses', 'label' => 'Licenses', 'path' => 'licenses'],
             ['id' => 'usage_reports', 'label' => 'Usage reports', 'path' => 'usage-reports'],
-            ['id' => 'cases', 'label' => 'Cases', 'path' => 'mockup/cases'],
+            ['id' => 'cases', 'label' => 'Cases', 'path' => 'cases'],
             ['id' => 'reports', 'label' => 'Reports', 'path' => 'mockup/reports'],
             ['id' => 'settings', 'label' => 'Settings', 'path' => 'mockup/settings'],
         ];
@@ -346,12 +346,17 @@ class UsageReports extends BaseController
         }
 
         $model = model(UsageReportModel::class);
-        if ($model->find($rid) === null) {
+        $row   = $model->find($rid);
+        if ($row === null) {
             throw PageNotFoundException::forPageNotFound();
         }
 
-        return redirect()->to(site_url('usage-reports/' . $rid))
-            ->with('message', 'Case escalation will be available in Step 6.');
+        if (! empty($row['infringement_case_id'])) {
+            return redirect()->to(site_url('cases/' . (int) $row['infringement_case_id']))
+                ->with('message', 'This usage report is already linked to a case.');
+        }
+
+        return redirect()->to(site_url('cases/create?usage_report_id=' . $rid));
     }
 
     private function setUsageType(string $id, string $usageType, string $message): ResponseInterface

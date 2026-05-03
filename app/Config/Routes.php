@@ -66,6 +66,18 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
     $routes->post('usage-reports/(:num)/mark-authorized', 'UsageReports::markAuthorized/$1');
     $routes->post('usage-reports/(:num)/mark-infringement', 'UsageReports::markInfringement/$1');
     $routes->post('usage-reports/(:num)/escalate-case', 'UsageReports::escalateCase/$1');
+
+    $routes->get('cases', 'Cases::index');
+    $routes->get('cases/create', 'Cases::create');
+    $routes->post('cases', 'Cases::store');
+    $routes->get('cases/(:num)', 'Cases::show/$1');
+    $routes->get('cases/(:num)/edit', 'Cases::edit/$1');
+    $routes->post('cases/(:num)/update', 'Cases::update/$1');
+    $routes->post('cases/(:num)/delete', 'Cases::delete/$1');
+    $routes->post('cases/(:num)/status', 'Cases::updateStatus/$1');
+    $routes->post('cases/(:num)/evidence', 'Cases::uploadEvidence/$1');
+    $routes->post('cases/(:num)/note', 'Cases::addNote/$1');
+    $routes->get('cases/(:num)/files/(:num)', 'Cases::evidenceFile/$1/$2');
 });
 
 $routes->group('mockup', static function ($routes) {

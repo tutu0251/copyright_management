@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Config\CopyrightMockData;
+use App\Models\InfringementCaseModel;
 use App\Models\LicenseModel;
 use App\Models\UsageReportModel;
 use App\Models\WorkModel;
@@ -31,7 +32,7 @@ class Dashboard extends BaseController
                 ['id' => 'licensees', 'label' => 'Licensees', 'path' => 'licensees'],
                 ['id' => 'licenses', 'label' => 'Licenses', 'path' => 'licenses'],
                 ['id' => 'usage_reports', 'label' => 'Usage reports', 'path' => 'usage-reports'],
-                ['id' => 'cases', 'label' => 'Cases', 'path' => 'mockup/cases'],
+                ['id' => 'cases', 'label' => 'Cases', 'path' => 'cases'],
                 ['id' => 'reports', 'label' => 'Reports', 'path' => 'mockup/reports'],
                 ['id' => 'settings', 'label' => 'Settings', 'path' => 'mockup/settings'],
             ],
@@ -87,9 +88,13 @@ class Dashboard extends BaseController
             [LicenseModel::PAYMENT_UNPAID, LicenseModel::PAYMENT_PARTIAL],
         )->getRowArray();
         $licenseUnpaid = (float) ($unpaidRow['s'] ?? 0);
-        $openCases      = $db->table('infringement_cases')
-            ->whereNotIn('status', ['closed', 'resolved'])
-            ->countAllResults();
+        $caseModel       = model(InfringementCaseModel::class);
+        $casesSchemaOk   = InfringementCaseModel::schemaReady();
+        $totalCases      = $casesSchemaOk ? (int) $caseModel->countAll() : 0;
+        $openCases       = $casesSchemaOk ? $caseModel->countOpen() : 0;
+        $highPriOpen     = $casesSchemaOk ? $caseModel->countHighPriorityOpen() : 0;
+        $resolvedCases   = $casesSchemaOk ? $caseModel->countResolved() : 0;
+        $casesByStatus   = $casesSchemaOk ? $caseModel->countsByStatus() : [];
 
         $usageTotal          = 0;
         $usageSuspected      = 0;
@@ -172,12 +177,23 @@ class Dashboard extends BaseController
         }
 
         $labels = CopyrightMockData::chartMonthLabels();
+        $caseStatusLabels = [];
+        $caseStatusValues = [];
+        if ($casesByStatus !== []) {
+            foreach (InfringementCaseModel::ALL_STATUSES as $st) {
+                $caseStatusLabels[] = InfringementCaseModel::statusLabel($st);
+                $caseStatusValues[] = $casesByStatus[$st] ?? 0;
+            }
+        }
+
         $chartPayload = [
             'labels'              => $labels,
             'registeredWorks'     => CopyrightMockData::registeredWorksMonthly(),
             'activeLicenses'      => CopyrightMockData::activeLicensesMonthly(),
             'infringement'        => CopyrightMockData::infringementMonthly(),
             'revenue'             => CopyrightMockData::licenseRevenueMonthly(),
+            'caseStatusLabels'    => $caseStatusLabels,
+            'caseStatusValues'    => $caseStatusValues,
         ];
 
         $stats = [
@@ -245,10 +261,32 @@ class Dashboard extends BaseController
                 'kpi_href' => site_url('licenses'),
             ],
             [
+                'label' => 'Infringement cases (total)',
+                'value' => (string) $totalCases,
+                'hint'  => 'All case records in workflow',
+                'kpi'   => 'cases_total',
+                'kpi_href' => site_url('cases'),
+            ],
+            [
                 'label' => 'Open infringement cases',
                 'value' => (string) $openCases,
-                'hint'  => 'Excluding closed and resolved',
-                'kpi'   => 'cases',
+                'hint'  => 'Excluding resolved and rejected',
+                'kpi'   => 'cases_open',
+                'kpi_href' => site_url('cases'),
+            ],
+            [
+                'label' => 'High-priority open cases',
+                'value' => (string) $highPriOpen,
+                'hint'  => 'Open cases marked high or critical priority',
+                'kpi'   => 'cases_high',
+                'kpi_href' => site_url('cases'),
+            ],
+            [
+                'label' => 'Resolved cases',
+                'value' => (string) $resolvedCases,
+                'hint'  => 'Cases marked resolved',
+                'kpi'   => 'cases_resolved',
+                'kpi_href' => site_url('cases?case_status=resolved'),
             ],
             [
                 'label' => 'Usage reports (total)',
@@ -281,6 +319,8 @@ class Dashboard extends BaseController
             'activity'              => CopyrightMockData::recentActivity(),
             'pinnedWorks'           => $pinnedWorks,
             'recentUsageDetections' => $recentUsageDetections,
+            'caseStatusBreakdown'   => $casesByStatus,
+            'casesSchemaOk'         => $casesSchemaOk,
         ]);
     }
 }

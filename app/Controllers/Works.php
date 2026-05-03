@@ -46,7 +46,7 @@ class Works extends BaseController
                 ['id' => 'licensees', 'label' => 'Licensees', 'path' => 'licensees'],
                 ['id' => 'licenses', 'label' => 'Licenses', 'path' => 'licenses'],
                 ['id' => 'usage_reports', 'label' => 'Usage reports', 'path' => 'usage-reports'],
-                ['id' => 'cases', 'label' => 'Cases', 'path' => 'mockup/cases'],
+                ['id' => 'cases', 'label' => 'Cases', 'path' => 'cases'],
                 ['id' => 'reports', 'label' => 'Reports', 'path' => 'mockup/reports'],
                 ['id' => 'settings', 'label' => 'Settings', 'path' => 'mockup/settings'],
             ],
