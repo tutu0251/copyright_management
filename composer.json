@@ -38,6 +38,7 @@
         "sort-packages": true
     },
     "scripts": {
-        "test": "phpunit"
+        "test": "phpunit --testsuite Unit --no-coverage",
+        "test:all": "phpunit --no-coverage"
     }
 }

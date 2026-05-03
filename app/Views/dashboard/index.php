@@ -48,7 +48,16 @@
 <div class="grid grid--dashboard-mid" style="margin-top: 1.25rem;">
     <div class="card">
         <h2 class="card__title">Activity feed</h2>
+        <?php $auditFeedLive = $auditFeedLive ?? false; ?>
+        <?php if ($auditFeedLive) : ?>
+            <p class="muted" style="margin: 0 0 0.75rem; font-size: 0.9rem;">Latest entries from the system audit log. <a href="<?= site_url('activities') ?>">View all</a></p>
+        <?php else : ?>
+            <p class="muted" style="margin: 0 0 0.75rem; font-size: 0.9rem;">Illustrative activity until the audit log migration is applied.</p>
+        <?php endif; ?>
         <div class="activity-feed">
+            <?php if (($activity ?? []) === []) : ?>
+                <p class="muted" style="margin: 0;">No audit activity recorded yet.</p>
+            <?php endif; ?>
             <?php foreach ($activity as $row) : ?>
                 <?php
                 $type = preg_replace('/[^a-z]/i', '', (string) ($row['type'] ?? 'work'));

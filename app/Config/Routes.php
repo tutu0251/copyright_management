@@ -17,6 +17,7 @@ $routes->group('', ['filter' => 'guest'], static function ($routes) {
 
 $routes->group('', ['filter' => 'auth'], static function ($routes) {
     $routes->get('dashboard', 'Dashboard::index');
+    $routes->get('activities', 'Activities::index');
     $routes->post('logout', 'Auth::logout');
 
     $routes->get('owners', 'Owners::index');
@@ -69,7 +70,7 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
 
     $routes->get('cases', 'Cases::index');
     $routes->get('cases/create', 'Cases::create');
-    $routes->post('cases', 'Cases::store');
+    $routes->post('cases/create', 'Cases::store');
     $routes->get('cases/(:num)', 'Cases::show/$1');
     $routes->get('cases/(:num)/edit', 'Cases::edit/$1');
     $routes->post('cases/(:num)/update', 'Cases::update/$1');

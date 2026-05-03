@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Config\CopyrightMockData;
+use App\Models\AuditLogModel;
 use App\Models\InfringementCaseModel;
 use App\Models\LicenseModel;
 use App\Models\UsageReportModel;
@@ -33,6 +34,7 @@ class Dashboard extends BaseController
                 ['id' => 'licenses', 'label' => 'Licenses', 'path' => 'licenses'],
                 ['id' => 'usage_reports', 'label' => 'Usage reports', 'path' => 'usage-reports'],
                 ['id' => 'cases', 'label' => 'Cases', 'path' => 'cases'],
+                ['id' => 'activities', 'label' => 'Activity', 'path' => 'activities'],
                 ['id' => 'reports', 'label' => 'Reports', 'path' => 'mockup/reports'],
                 ['id' => 'settings', 'label' => 'Settings', 'path' => 'mockup/settings'],
             ],
@@ -196,6 +198,43 @@ class Dashboard extends BaseController
             'caseStatusValues'    => $caseStatusValues,
         ];
 
+        $activityFeed = CopyrightMockData::recentActivity();
+        $auditTodayCount = 0;
+        $auditTopLabel   = '—';
+        if (AuditLogModel::schemaReady()) {
+            $auditModel      = model(AuditLogModel::class);
+            $dayStart        = date('Y-m-d 00:00:00');
+            $auditTodayCount = $auditModel->countSince($dayStart);
+            $topUsers        = $auditModel->topUsersSince($dayStart, 5);
+            if ($topUsers !== []) {
+                $parts = [];
+                foreach (array_slice($topUsers, 0, 3) as $u) {
+                    $nm = (string) ($u['display_name'] ?? '');
+                    if ($nm === '') {
+                        $nm = (string) ($u['email'] ?? 'User');
+                    }
+                    $parts[] = $nm . ' (' . (string) ($u['action_count'] ?? 0) . ')';
+                }
+                $auditTopLabel = implode(', ', $parts);
+            }
+            $rawFeed     = $auditModel->listRecentWithUsers(12, 0);
+            $activityFeed = [];
+            foreach ($rawFeed as $r) {
+                $actor = (string) ($r['actor_name'] ?? '') !== ''
+                    ? (string) $r['actor_name']
+                    : ((string) ($r['actor_email'] ?? '') !== '' ? (string) $r['actor_email'] : '—');
+                $action = (string) ($r['action_type'] ?? '');
+                $et     = (string) ($r['entity_type'] ?? '');
+                $eid    = isset($r['entity_id']) && $r['entity_id'] !== null && $r['entity_id'] !== '' ? (int) $r['entity_id'] : 0;
+                $elab   = $et !== '' ? ($eid > 0 ? $et . ' #' . $eid : $et) : '—';
+                $activityFeed[] = [
+                    'time' => (string) ($r['created_at'] ?? ''),
+                    'text' => $actor . ' · ' . $action . ' · ' . $elab,
+                    'type' => $et !== '' ? preg_replace('/[^a-z]/i', '', $et) : 'audit',
+                ];
+            }
+        }
+
         $stats = [
             [
                 'label' => 'Registered works',
@@ -311,12 +350,30 @@ class Dashboard extends BaseController
             ],
         ];
 
+        if (AuditLogModel::schemaReady()) {
+            $stats[] = [
+                'label' => 'Audit events today',
+                'value' => (string) $auditTodayCount,
+                'hint'  => 'Actions recorded in the audit log since midnight',
+                'kpi'   => 'audit_today',
+                'kpi_href' => site_url('activities'),
+            ];
+            $stats[] = [
+                'label' => 'Most active users today',
+                'value' => $auditTopLabel,
+                'hint'  => 'By audit event count (top three names shown)',
+                'kpi'   => 'audit_top',
+                'kpi_href' => site_url('activities'),
+            ];
+        }
+
         return $this->layout('dashboard/index', [
             'pageTitle'             => 'Dashboard',
             'stats'                 => $stats,
             'useCharts'             => true,
             'chartPayload'          => $chartPayload,
-            'activity'              => CopyrightMockData::recentActivity(),
+            'activity'              => $activityFeed,
+            'auditFeedLive'         => AuditLogModel::schemaReady(),
             'pinnedWorks'           => $pinnedWorks,
             'recentUsageDetections' => $recentUsageDetections,
             'caseStatusBreakdown'   => $casesByStatus,

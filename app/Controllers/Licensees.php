@@ -26,6 +26,7 @@ class Licensees extends BaseController
             ['id' => 'licenses', 'label' => 'Licenses', 'path' => 'licenses'],
             ['id' => 'usage_reports', 'label' => 'Usage reports', 'path' => 'usage-reports'],
             ['id' => 'cases', 'label' => 'Cases', 'path' => 'cases'],
+            ['id' => 'activities', 'label' => 'Activity', 'path' => 'activities'],
             ['id' => 'reports', 'label' => 'Reports', 'path' => 'mockup/reports'],
             ['id' => 'settings', 'label' => 'Settings', 'path' => 'mockup/settings'],
         ];

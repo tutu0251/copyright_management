@@ -196,3 +196,13 @@ $cid = (int) ($caseRow['id'] ?? 0);
         </ul>
     <?php endif; ?>
 </div>
+
+<?php
+$auditHistory = $auditHistory ?? [];
+$auditHistoryMoreUrl = $auditHistoryMoreUrl ?? null;
+?>
+<?= view('components/entity_audit_history', [
+    'auditHistory' => $auditHistory,
+    'moreUrl'      => $auditHistoryMoreUrl,
+    'sectionTitle' => 'System audit log',
+]) ?>

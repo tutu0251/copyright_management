@@ -23,6 +23,9 @@
         </report>
     </coverage>
     <testsuites>
+        <testsuite name="Unit">
+            <directory>./tests/unit</directory>
+        </testsuite>
         <testsuite name="App">
             <directory>./tests</directory>
         </testsuite>

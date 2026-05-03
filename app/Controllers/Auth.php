@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Models\AuditLogModel;
 use App\Models\UserModel;
+use App\Services\AuditLogService;
 use Config\Validation;
 
 class Auth extends BaseController
@@ -51,12 +53,40 @@ class Auth extends BaseController
             'auth_primary_role_label'=> $names[0] ?? 'Member',
         ]);
 
+        if (AuditLogModel::schemaReady()) {
+            $uid = (int) $found['user']['id'];
+            service('auditLog')->log(
+                AuditLogService::ACTION_LOGIN,
+                AuditLogService::ENTITY_USER,
+                $uid,
+                null,
+                ['email' => (string) $found['user']['email']],
+                $uid,
+                $this->request,
+            );
+        }
+
         return redirect()->to(site_url('dashboard'));
     }
 
     public function logout()
     {
         $session = session();
+        $user    = auth_user();
+        if ($user !== null && AuditLogModel::schemaReady()) {
+            $uid = (int) ($user['id'] ?? 0);
+            if ($uid > 0) {
+                service('auditLog')->log(
+                    AuditLogService::ACTION_LOGOUT,
+                    AuditLogService::ENTITY_USER,
+                    $uid,
+                    null,
+                    ['email' => (string) ($user['email'] ?? '')],
+                    $uid,
+                    $this->request,
+                );
+            }
+        }
         $session->remove([
             'auth_user_id',
             'auth_email',

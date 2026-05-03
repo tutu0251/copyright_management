@@ -1,6 +1,8 @@
 <?php
 $license = $license ?? [];
 $message = $message ?? null;
+$auditHistory = $auditHistory ?? [];
+$auditHistoryMoreUrl = $auditHistoryMoreUrl ?? null;
 $id = (int) ($license['id'] ?? 0);
 $wid = (int) ($license['work_id'] ?? 0);
 $lid = (int) ($license['licensee_id'] ?? 0);
@@ -80,3 +82,9 @@ $cur = (string) ($license['currency'] ?? 'USD');
         </div>
     </div>
 </div>
+
+<?= view('components/entity_audit_history', [
+    'auditHistory' => $auditHistory,
+    'moreUrl'      => $auditHistoryMoreUrl,
+    'sectionTitle' => 'Activity / history',
+]) ?>

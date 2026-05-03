@@ -7,6 +7,7 @@ namespace App\Controllers;
 use App\Models\OwnerModel;
 use App\Models\WorkModel;
 use App\Models\WorkOwnerModel;
+use App\Services\AuditLogService;
 use CodeIgniter\Exceptions\PageNotFoundException;
 use CodeIgniter\HTTP\ResponseInterface;
 
@@ -33,6 +34,7 @@ class WorkOwners extends BaseController
                 ['id' => 'licenses', 'label' => 'Licenses', 'path' => 'licenses'],
                 ['id' => 'usage_reports', 'label' => 'Usage reports', 'path' => 'usage-reports'],
                 ['id' => 'cases', 'label' => 'Cases', 'path' => 'cases'],
+                ['id' => 'activities', 'label' => 'Activity', 'path' => 'activities'],
                 ['id' => 'reports', 'label' => 'Reports', 'path' => 'mockup/reports'],
                 ['id' => 'settings', 'label' => 'Settings', 'path' => 'mockup/settings'],
             ],
@@ -123,6 +125,18 @@ class WorkOwners extends BaseController
             return redirect()->back()->withInput()->with('errors', $workOwnerModel->errors() ?: ['db' => 'Unable to save link.']);
         }
 
+        service('auditLog')->log(
+            AuditLogService::ACTION_UPDATE,
+            AuditLogService::ENTITY_WORK,
+            $wid,
+            null,
+            [
+                'work_owner_change' => 'linked',
+                'work_owner_id'     => $id,
+                'owner_id'          => (int) $row['owner_id'],
+            ],
+        );
+
         return redirect()->to(site_url('works/' . $wid . '/owners'))->with('message', 'Owner linked to work.');
     }
 
@@ -139,6 +153,14 @@ class WorkOwners extends BaseController
         if ($row === null || (int) $row['work_id'] !== $wid) {
             throw PageNotFoundException::forPageNotFound();
         }
+
+        service('auditLog')->log(
+            AuditLogService::ACTION_UPDATE,
+            AuditLogService::ENTITY_WORK,
+            $wid,
+            ['work_owner_id' => $piv, 'owner_id' => (int) ($row['owner_id'] ?? 0)],
+            ['work_owner_change' => 'unlinked'],
+        );
 
         $workOwnerModel->delete($piv);
 

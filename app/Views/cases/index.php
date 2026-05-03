@@ -32,7 +32,7 @@ $err = session()->getFlashdata('errors');
 
 <div class="toolbar">
     <div class="toolbar__left toolbar__grow">
-        <?= form_open(site_url('cases'), ['method' => 'get', 'class' => 'toolbar__grow', 'style' => 'display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;']) ?>
+        <form class="toolbar__grow" method="get" action="<?= esc(site_url('cases'), 'attr') ?>" style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;">
             <input class="input toolbar__search" type="search" name="q" value="<?= esc($searchQuery, 'attr') ?>" placeholder="Search title, work, description…" aria-label="Search cases">
             <select class="select" name="case_status" aria-label="Filter by status">
                 <option value="">All statuses</option>
@@ -50,7 +50,7 @@ $err = session()->getFlashdata('errors');
             <?php if ($searchQuery !== '' || $statusFilter !== '' || $priorityFilter !== '') : ?>
                 <a class="btn btn--ghost btn--sm" href="<?= site_url('cases') ?>">Clear</a>
             <?php endif; ?>
-        <?= form_close() ?>
+        </form>
     </div>
     <div class="toolbar__right">
         <a class="btn btn--primary" href="<?= site_url('cases/create') ?>">Open case</a>

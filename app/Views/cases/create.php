@@ -57,7 +57,7 @@ $lockWork = $reportSummary !== null;
 
 <div class="card" style="margin-top: 1rem; max-width: 920px;">
     <h2 class="card__title">Case details</h2>
-    <?= form_open_multipart(site_url('cases'), ['class' => 'stack']) ?>
+    <?= form_open_multipart(site_url('cases/create'), ['class' => 'stack']) ?>
         <?php
         $hiddenReportId = $prefillReportId !== null ? (int) $prefillReportId : (int) old('usage_report_id', '0');
         ?>

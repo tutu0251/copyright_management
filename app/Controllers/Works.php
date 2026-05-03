@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Models\AuditLogModel;
 use App\Models\LicenseModel;
 use App\Models\UsageReportModel;
 use App\Models\WorkFileModel;
 use App\Models\WorkModel;
 use App\Models\WorkOwnerModel;
+use App\Services\AuditLogService;
 use CodeIgniter\Exceptions\PageNotFoundException;
 use CodeIgniter\HTTP\Files\UploadedFile;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -47,6 +49,7 @@ class Works extends BaseController
                 ['id' => 'licenses', 'label' => 'Licenses', 'path' => 'licenses'],
                 ['id' => 'usage_reports', 'label' => 'Usage reports', 'path' => 'usage-reports'],
                 ['id' => 'cases', 'label' => 'Cases', 'path' => 'cases'],
+                ['id' => 'activities', 'label' => 'Activity', 'path' => 'activities'],
                 ['id' => 'reports', 'label' => 'Reports', 'path' => 'mockup/reports'],
                 ['id' => 'settings', 'label' => 'Settings', 'path' => 'mockup/settings'],
             ],
@@ -138,6 +141,14 @@ class Works extends BaseController
             session()->setFlashdata('warning', implode(' ', $fileErrors));
         }
 
+        service('auditLog')->log(
+            AuditLogService::ACTION_CREATE,
+            AuditLogService::ENTITY_WORK,
+            $workId,
+            null,
+            array_merge($payload, ['id' => $workId]),
+        );
+
         return redirect()->to(site_url('works/' . $workId))->with('message', 'Work created.');
     }
 
@@ -162,6 +173,13 @@ class Works extends BaseController
 
         $related = $this->loadRelatedRegistryData($workId);
 
+        $auditHistory    = [];
+        $auditHistoryUrl = null;
+        if (AuditLogModel::schemaReady()) {
+            $auditHistory    = model(AuditLogModel::class)->listForEntity(AuditLogService::ENTITY_WORK, $workId, 25);
+            $auditHistoryUrl = site_url('activities?entity_type=work&entity_id=' . $workId);
+        }
+
         $monitoringDb = model(UsageReportModel::class)->forWork($workId);
         $usageMonitoringRows = [];
         foreach ($monitoringDb as $ur) {
@@ -184,6 +202,8 @@ class Works extends BaseController
             'licenseUsageSnapshots' => $related['licenseUsageSnapshots'],
             'usageMonitoringRows'   => $usageMonitoringRows,
             'ownershipRows'         => $related['ownershipRows'],
+            'auditHistory'          => $auditHistory,
+            'auditHistoryMoreUrl'   => $auditHistoryUrl,
             'flashMessage'  => session()->getFlashdata('message'),
             'flashWarning'  => session()->getFlashdata('warning'),
         ]);
@@ -236,6 +256,14 @@ class Works extends BaseController
             return redirect()->back()->withInput()->with('errors', $workModel->errors());
         }
 
+        service('auditLog')->log(
+            AuditLogService::ACTION_UPDATE,
+            AuditLogService::ENTITY_WORK,
+            $workId,
+            $existing,
+            $payload,
+        );
+
         $workModel->update($workId, $payload);
 
         $user        = auth_user();
@@ -255,9 +283,18 @@ class Works extends BaseController
         }
 
         $workModel = model(WorkModel::class);
-        if ($workModel->find($workId) === null) {
+        $before   = $workModel->find($workId);
+        if ($before === null) {
             throw PageNotFoundException::forPageNotFound();
         }
+
+        service('auditLog')->log(
+            AuditLogService::ACTION_DELETE,
+            AuditLogService::ENTITY_WORK,
+            $workId,
+            $before,
+            null,
+        );
 
         $workModel->delete($workId);
 

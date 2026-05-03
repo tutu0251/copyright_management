@@ -177,9 +177,13 @@ class InfringementCaseModel extends Model
             ->select('w.title AS work_title', false)
             ->select('u.display_name AS assignee_name', false)
             ->join("{$w} w", "w.id = {$ic}.work_id", 'inner')
-            ->join("{$u} u", "u.id = {$ic}.assigned_to", 'left')
-            ->where('w.deleted_at', null)
-            ->orderBy("{$ic}.opened_at", 'DESC')
+            ->join("{$u} u", "u.id = {$ic}.assigned_to", 'left');
+
+        if ($this->db->fieldExists('deleted_at', 'works')) {
+            $b->where('w.deleted_at', null);
+        }
+
+        $b->orderBy("{$ic}.opened_at", 'DESC')
             ->orderBy("{$ic}.id", 'DESC')
             ->limit($limit);
 
@@ -215,17 +219,20 @@ class InfringementCaseModel extends Model
         $w  = $this->db->prefixTable('works');
         $u  = $this->db->prefixTable('users');
 
-        $row = $this->builder()
+        $b = $this->builder()
             ->select("{$ic}.*", false)
             ->select('w.title AS work_title', false)
             ->select('u.display_name AS assignee_name', false)
             ->select('u.email AS assignee_email', false)
             ->join("{$w} w", "w.id = {$ic}.work_id", 'inner')
             ->join("{$u} u", "u.id = {$ic}.assigned_to", 'left')
-            ->where("{$ic}.id", $id)
-            ->where('w.deleted_at', null)
-            ->get()
-            ->getRowArray();
+            ->where("{$ic}.id", $id);
+
+        if ($this->db->fieldExists('deleted_at', 'works')) {
+            $b->where('w.deleted_at', null);
+        }
+
+        $row = $b->get()->getRowArray();
 
         return $row ?: null;
     }

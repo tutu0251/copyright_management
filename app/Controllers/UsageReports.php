@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Models\UsageReportModel;
 use App\Models\WorkModel;
+use App\Services\AuditLogService;
 use CodeIgniter\Exceptions\PageNotFoundException;
 use CodeIgniter\HTTP\Files\UploadedFile;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -34,6 +35,7 @@ class UsageReports extends BaseController
             ['id' => 'licenses', 'label' => 'Licenses', 'path' => 'licenses'],
             ['id' => 'usage_reports', 'label' => 'Usage reports', 'path' => 'usage-reports'],
             ['id' => 'cases', 'label' => 'Cases', 'path' => 'cases'],
+            ['id' => 'activities', 'label' => 'Activity', 'path' => 'activities'],
             ['id' => 'reports', 'label' => 'Reports', 'path' => 'mockup/reports'],
             ['id' => 'settings', 'label' => 'Settings', 'path' => 'mockup/settings'],
         ];
@@ -119,7 +121,7 @@ class UsageReports extends BaseController
         $post  = $this->request->getPost();
         $user  = auth_user();
 
-        $payload = $this->normalizePayload($post, $user['id'] ?? null);
+        $payload = $this->normalizePayload($post, $user['id'] ?? null, true);
         $vErr    = $this->validatePayloadExtras($payload);
         if ($vErr !== []) {
             return redirect()->back()->withInput()->with('errors', $vErr);
@@ -137,6 +139,14 @@ class UsageReports extends BaseController
         if ($id < 1) {
             return redirect()->back()->withInput()->with('errors', $model->errors() ?: ['db' => 'Unable to save usage report.']);
         }
+
+        service('auditLog')->log(
+            AuditLogService::ACTION_CREATE,
+            AuditLogService::ENTITY_USAGE_REPORT,
+            $id,
+            null,
+            array_merge($payload, ['id' => $id]),
+        );
 
         $evErr = $this->processEvidenceUpload($id, $user['id'] ?? null);
         if ($evErr !== null) {
@@ -242,6 +252,14 @@ class UsageReports extends BaseController
             return redirect()->back()->withInput()->with('errors', $model->errors());
         }
 
+        service('auditLog')->log(
+            AuditLogService::ACTION_UPDATE,
+            AuditLogService::ENTITY_USAGE_REPORT,
+            $rid,
+            $existing,
+            $payload,
+        );
+
         $model->update($rid, $payload);
 
         $remove = $this->request->getPost('remove_evidence');
@@ -279,6 +297,14 @@ class UsageReports extends BaseController
         if ($row === null) {
             throw PageNotFoundException::forPageNotFound();
         }
+
+        service('auditLog')->log(
+            AuditLogService::ACTION_DELETE,
+            AuditLogService::ENTITY_USAGE_REPORT,
+            $rid,
+            $row,
+            null,
+        );
 
         $this->deleteEvidenceFiles($row);
         $model->delete($rid);
@@ -375,9 +401,19 @@ class UsageReports extends BaseController
         }
 
         $model = model(UsageReportModel::class);
-        if ($model->find($rid) === null) {
+        $row   = $model->find($rid);
+        if ($row === null) {
             throw PageNotFoundException::forPageNotFound();
         }
+
+        $prevType = (string) ($row['usage_type'] ?? '');
+        service('auditLog')->log(
+            AuditLogService::ACTION_STATUS_CHANGE,
+            AuditLogService::ENTITY_USAGE_REPORT,
+            $rid,
+            ['usage_type' => $prevType],
+            ['usage_type' => $usageType],
+        );
 
         $model->update($rid, ['usage_type' => $usageType]);
 

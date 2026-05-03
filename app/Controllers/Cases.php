@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Models\AuditLogModel;
 use App\Models\CaseEvidenceModel;
 use App\Models\CaseStatusLogModel;
 use App\Models\InfringementCaseModel;
@@ -11,6 +12,7 @@ use App\Models\InfringementCaseNoteModel;
 use App\Models\UsageReportModel;
 use App\Models\UserModel;
 use App\Models\WorkModel;
+use App\Services\AuditLogService;
 use CodeIgniter\Exceptions\PageNotFoundException;
 use CodeIgniter\HTTP\Files\UploadedFile;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -39,6 +41,7 @@ class Cases extends BaseController
             ['id' => 'licenses', 'label' => 'Licenses', 'path' => 'licenses'],
             ['id' => 'usage_reports', 'label' => 'Usage reports', 'path' => 'usage-reports'],
             ['id' => 'cases', 'label' => 'Cases', 'path' => 'cases'],
+            ['id' => 'activities', 'label' => 'Activity', 'path' => 'activities'],
             ['id' => 'reports', 'label' => 'Reports', 'path' => 'mockup/reports'],
             ['id' => 'settings', 'label' => 'Settings', 'path' => 'mockup/settings'],
         ];
@@ -237,6 +240,14 @@ class Cases extends BaseController
 
         $dbConn->transComplete();
 
+        service('auditLog')->log(
+            AuditLogService::ACTION_CREATE,
+            AuditLogService::ENTITY_CASE,
+            $caseId,
+            null,
+            array_merge($payload, ['id' => $caseId]),
+        );
+
         return redirect()->to(site_url('cases/' . $caseId))->with('message', 'Case created.');
     }
 
@@ -271,15 +282,24 @@ class Cases extends BaseController
 
         $timeline = $this->buildTimeline($cid);
 
+        $auditHistory    = [];
+        $auditHistoryUrl = null;
+        if (AuditLogModel::schemaReady()) {
+            $auditHistory    = model(AuditLogModel::class)->listForEntity(AuditLogService::ENTITY_CASE, $cid, 25);
+            $auditHistoryUrl = site_url('activities?entity_type=case&entity_id=' . $cid);
+        }
+
         return $this->layout('cases/show', [
-            'pageTitle'    => 'Case · ' . (string) ($row['case_title'] ?? ''),
-            'caseRow'      => $this->formatCaseForView($row),
-            'usageReport'  => $usageReport,
-            'evidence'     => $evidence,
-            'timeline'     => $timeline,
-            'users'        => $this->usersForAssign(),
-            'statuses'     => InfringementCaseModel::ALL_STATUSES,
-            'errors'       => session()->getFlashdata('errors') ?? [],
+            'pageTitle'           => 'Case · ' . (string) ($row['case_title'] ?? ''),
+            'caseRow'             => $this->formatCaseForView($row),
+            'usageReport'         => $usageReport,
+            'evidence'            => $evidence,
+            'timeline'            => $timeline,
+            'users'               => $this->usersForAssign(),
+            'statuses'            => InfringementCaseModel::ALL_STATUSES,
+            'errors'              => session()->getFlashdata('errors') ?? [],
+            'auditHistory'        => $auditHistory,
+            'auditHistoryMoreUrl' => $auditHistoryUrl,
         ]);
     }
 
@@ -340,6 +360,14 @@ class Cases extends BaseController
             return redirect()->back()->withInput()->with('errors', ['work_id' => 'Selected work was not found.']);
         }
 
+        service('auditLog')->log(
+            AuditLogService::ACTION_UPDATE,
+            AuditLogService::ENTITY_CASE,
+            $cid,
+            $existing,
+            $payload,
+        );
+
         $caseModel->update($cid, $payload);
 
         return redirect()->to(site_url('cases/' . $cid))->with('message', 'Case updated.');
@@ -361,6 +389,14 @@ class Cases extends BaseController
         if ($existing === null) {
             throw PageNotFoundException::forPageNotFound();
         }
+
+        service('auditLog')->log(
+            AuditLogService::ACTION_DELETE,
+            AuditLogService::ENTITY_CASE,
+            $cid,
+            $existing,
+            null,
+        );
 
         $this->deleteCaseEvidenceFiles($cid);
 
@@ -411,6 +447,18 @@ class Cases extends BaseController
 
         $this->logStatusChange($cid, $prev !== '' ? $prev : null, $newStatus, $note !== '' ? $note : null, $user['id'] ?? null);
 
+        $newAudit = ['case_status' => $newStatus];
+        if ($note !== '') {
+            $newAudit['transition_note'] = substr($note, 0, 500);
+        }
+        service('auditLog')->log(
+            AuditLogService::ACTION_STATUS_CHANGE,
+            AuditLogService::ENTITY_CASE,
+            $cid,
+            ['case_status' => $prev],
+            $newAudit,
+        );
+
         return redirect()->to(site_url('cases/' . $cid))->with('message', 'Status updated.');
     }
 
@@ -447,6 +495,17 @@ class Cases extends BaseController
         }
         $noteModel->insert($noteData);
 
+        service('auditLog')->log(
+            AuditLogService::ACTION_UPDATE,
+            AuditLogService::ENTITY_CASE,
+            $cid,
+            null,
+            [
+                'note_added'   => true,
+                'note_preview' => substr($body, 0, 400),
+            ],
+        );
+
         return redirect()->to(site_url('cases/' . $cid))->with('message', 'Note added.');
     }
 
@@ -470,6 +529,14 @@ class Cases extends BaseController
         if ($err !== null) {
             return redirect()->back()->with('errors', [$err]);
         }
+
+        service('auditLog')->log(
+            AuditLogService::ACTION_UPDATE,
+            AuditLogService::ENTITY_CASE,
+            $cid,
+            null,
+            ['evidence_uploaded' => true],
+        );
 
         return redirect()->to(site_url('cases/' . $cid))->with('message', 'Evidence uploaded.');
     }

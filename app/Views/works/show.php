@@ -8,6 +8,8 @@ $ownershipRows = $ownershipRows ?? [];
 $files = $files ?? [];
 $flashMessage = $flashMessage ?? null;
 $flashWarning = $flashWarning ?? null;
+$auditHistory = $auditHistory ?? [];
+$auditHistoryMoreUrl = $auditHistoryMoreUrl ?? null;
 ?>
 
 <?php if ($flashMessage) : ?>
@@ -33,6 +35,7 @@ $flashWarning = $flashWarning ?? null;
         <button type="button" class="ui-tabs__tab" role="tab" aria-selected="false" data-tab="ownership">Ownership</button>
         <button type="button" class="ui-tabs__tab" role="tab" aria-selected="false" data-tab="licenses">Licenses</button>
         <button type="button" class="ui-tabs__tab" role="tab" aria-selected="false" data-tab="usage">Usage</button>
+        <button type="button" class="ui-tabs__tab" role="tab" aria-selected="false" data-tab="history">History</button>
     </div>
 
     <div class="ui-tabs__panel is-active" data-tab-panel="overview" role="tabpanel">
@@ -322,5 +325,13 @@ $flashWarning = $flashWarning ?? null;
                 <?= $this->include('components/table_end') ?>
             </div>
         <?php endif; ?>
+    </div>
+
+    <div class="ui-tabs__panel" data-tab-panel="history" role="tabpanel">
+        <?= view('components/entity_audit_history', [
+            'auditHistory'   => $auditHistory,
+            'moreUrl'        => $auditHistoryMoreUrl,
+            'sectionTitle'   => 'Activity / history',
+        ]) ?>
     </div>
 </div>

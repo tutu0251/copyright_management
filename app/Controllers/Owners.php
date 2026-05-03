@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Models\OwnerModel;
 use App\Models\WorkOwnerModel;
+use App\Services\AuditLogService;
 use CodeIgniter\Exceptions\PageNotFoundException;
 use CodeIgniter\HTTP\ResponseInterface;
 
@@ -32,6 +33,7 @@ class Owners extends BaseController
                 ['id' => 'licenses', 'label' => 'Licenses', 'path' => 'licenses'],
                 ['id' => 'usage_reports', 'label' => 'Usage reports', 'path' => 'usage-reports'],
                 ['id' => 'cases', 'label' => 'Cases', 'path' => 'cases'],
+                ['id' => 'activities', 'label' => 'Activity', 'path' => 'activities'],
                 ['id' => 'reports', 'label' => 'Reports', 'path' => 'mockup/reports'],
                 ['id' => 'settings', 'label' => 'Settings', 'path' => 'mockup/settings'],
             ],
@@ -89,6 +91,14 @@ class Owners extends BaseController
             return redirect()->back()->withInput()->with('errors', $model->errors() ?: ['db' => 'Unable to save owner.']);
         }
 
+        service('auditLog')->log(
+            AuditLogService::ACTION_CREATE,
+            AuditLogService::ENTITY_OWNER,
+            $id,
+            null,
+            array_merge($post, ['id' => $id]),
+        );
+
         return redirect()->to(site_url('owners/' . $id))->with('message', 'Owner created.');
     }
 
@@ -143,7 +153,8 @@ class Owners extends BaseController
         }
 
         $model = model(OwnerModel::class);
-        if ($model->find($ownerId) === null) {
+        $existing = $model->find($ownerId);
+        if ($existing === null) {
             throw PageNotFoundException::forPageNotFound();
         }
 
@@ -151,6 +162,14 @@ class Owners extends BaseController
         if (! $model->validate($post)) {
             return redirect()->back()->withInput()->with('errors', $model->errors());
         }
+
+        service('auditLog')->log(
+            AuditLogService::ACTION_UPDATE,
+            AuditLogService::ENTITY_OWNER,
+            $ownerId,
+            $existing,
+            $post,
+        );
 
         $model->update($ownerId, $post);
 
@@ -165,7 +184,8 @@ class Owners extends BaseController
         }
 
         $model = model(OwnerModel::class);
-        if ($model->find($ownerId) === null) {
+        $before = $model->find($ownerId);
+        if ($before === null) {
             throw PageNotFoundException::forPageNotFound();
         }
 
@@ -178,6 +198,14 @@ class Owners extends BaseController
         if (! $db->transStatus()) {
             return redirect()->back()->with('errors', ['db' => 'Could not archive owner.']);
         }
+
+        service('auditLog')->log(
+            AuditLogService::ACTION_DELETE,
+            AuditLogService::ENTITY_OWNER,
+            $ownerId,
+            $before,
+            null,
+        );
 
         return redirect()->to(site_url('owners'))->with('message', 'Owner archived and unlinked from works.');
     }

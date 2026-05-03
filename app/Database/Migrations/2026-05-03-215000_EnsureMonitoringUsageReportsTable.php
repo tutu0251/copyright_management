@@ -7,32 +7,19 @@ namespace App\Database\Migrations;
 use CodeIgniter\Database\Migration;
 
 /**
- * Legacy `usage_reports` stored per-license period metrics. Step 5 repurposes the name
- * for work-level usage monitoring; license rows move to `license_usage_snapshots`.
+ * Repairs databases where Step 5 renamed legacy `usage_reports` but the new monitoring
+ * table was never created (e.g. interrupted migration or failed CREATE after RENAME).
  */
-class RenameLicenseUsageSnapshotsAndCreateMonitoringUsageReports extends Migration
+class EnsureMonitoringUsageReportsTable extends Migration
 {
     public function up(): void
     {
-        $db  = $this->db;
-        $pre = $db->getPrefix();
+        $db = $this->db;
 
         if ($db->tableExists('usage_reports') && $db->fieldExists('work_id', 'usage_reports')) {
             return;
         }
 
-        if ($db->tableExists('usage_reports') && $db->fieldExists('license_id', 'usage_reports')) {
-            if (! $db->tableExists('license_usage_snapshots')) {
-                $from = $pre . 'usage_reports';
-                $to   = $pre . 'license_usage_snapshots';
-                $db->query("RENAME TABLE `{$from}` TO `{$to}`");
-            } else {
-                $this->forge->dropTable('usage_reports', true);
-            }
-        }
-
-        // If the legacy rename/drop path did not clear the name, any remaining `usage_reports`
-        // row here is not the new monitoring shape (work_id is handled at the top).
         if ($db->tableExists('usage_reports')) {
             $this->forge->dropTable('usage_reports', true);
         }
@@ -69,17 +56,6 @@ class RenameLicenseUsageSnapshotsAndCreateMonitoringUsageReports extends Migrati
 
     public function down(): void
     {
-        $db  = $this->db;
-        $pre = $db->getPrefix();
-
-        if ($db->tableExists('usage_reports') && $db->fieldExists('work_id', 'usage_reports')) {
-            $this->forge->dropTable('usage_reports', true);
-        }
-
-        if ($db->tableExists('license_usage_snapshots') && ! $db->tableExists('usage_reports')) {
-            $from = $pre . 'license_usage_snapshots';
-            $to   = $pre . 'usage_reports';
-            $db->query("RENAME TABLE `{$from}` TO `{$to}`");
-        }
+        // No-op: do not drop `usage_reports` on rollback (would destroy monitoring data).
     }
 }

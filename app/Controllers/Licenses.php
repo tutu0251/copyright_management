@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Models\AuditLogModel;
 use App\Models\LicenseeModel;
 use App\Models\LicenseModel;
 use App\Models\WorkModel;
+use App\Services\AuditLogService;
 use CodeIgniter\Exceptions\PageNotFoundException;
 use CodeIgniter\HTTP\ResponseInterface;
 
@@ -27,6 +29,7 @@ class Licenses extends BaseController
             ['id' => 'licenses', 'label' => 'Licenses', 'path' => 'licenses'],
             ['id' => 'usage_reports', 'label' => 'Usage reports', 'path' => 'usage-reports'],
             ['id' => 'cases', 'label' => 'Cases', 'path' => 'cases'],
+            ['id' => 'activities', 'label' => 'Activity', 'path' => 'activities'],
             ['id' => 'reports', 'label' => 'Reports', 'path' => 'mockup/reports'],
             ['id' => 'settings', 'label' => 'Settings', 'path' => 'mockup/settings'],
         ];
@@ -110,6 +113,14 @@ class Licenses extends BaseController
             return redirect()->back()->withInput()->with('errors', $model->errors() ?: ['db' => 'Unable to save license.']);
         }
 
+        service('auditLog')->log(
+            AuditLogService::ACTION_CREATE,
+            AuditLogService::ENTITY_LICENSE,
+            $id,
+            null,
+            array_merge($post, ['id' => $id]),
+        );
+
         return redirect()->to(site_url('licenses/' . $id))->with('message', 'License created.');
     }
 
@@ -125,10 +136,19 @@ class Licenses extends BaseController
             throw PageNotFoundException::forPageNotFound();
         }
 
+        $auditHistory    = [];
+        $auditHistoryUrl = null;
+        if (AuditLogModel::schemaReady()) {
+            $auditHistory    = model(AuditLogModel::class)->listForEntity(AuditLogService::ENTITY_LICENSE, $lid, 25);
+            $auditHistoryUrl = site_url('activities?entity_type=license&entity_id=' . $lid);
+        }
+
         return $this->layout('licenses/show', [
-            'pageTitle' => 'License #' . $lid,
-            'license'   => $row,
-            'message'   => session()->getFlashdata('message'),
+            'pageTitle'         => 'License #' . $lid,
+            'license'           => $row,
+            'message'           => session()->getFlashdata('message'),
+            'auditHistory'      => $auditHistory,
+            'auditHistoryMoreUrl' => $auditHistoryUrl,
         ]);
     }
 
@@ -165,7 +185,8 @@ class Licenses extends BaseController
         }
 
         $model = model(LicenseModel::class);
-        if ($model->find($lid) === null) {
+        $existing = $model->find($lid);
+        if ($existing === null) {
             throw PageNotFoundException::forPageNotFound();
         }
 
@@ -185,6 +206,14 @@ class Licenses extends BaseController
             return redirect()->back()->withInput()->with('errors', $model->errors());
         }
 
+        service('auditLog')->log(
+            AuditLogService::ACTION_UPDATE,
+            AuditLogService::ENTITY_LICENSE,
+            $lid,
+            $existing,
+            $post,
+        );
+
         $model->update($lid, $post);
 
         return redirect()->to(site_url('licenses/' . $lid))->with('message', 'License updated.');
@@ -198,9 +227,18 @@ class Licenses extends BaseController
         }
 
         $model = model(LicenseModel::class);
-        if ($model->find($lid) === null) {
+        $before = $model->find($lid);
+        if ($before === null) {
             throw PageNotFoundException::forPageNotFound();
         }
+
+        service('auditLog')->log(
+            AuditLogService::ACTION_DELETE,
+            AuditLogService::ENTITY_LICENSE,
+            $lid,
+            $before,
+            null,
+        );
 
         $model->delete($lid);
 
