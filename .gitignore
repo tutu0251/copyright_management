@@ -86,6 +86,9 @@ php_errors.log
 #-------------------------
 vendor/
 
+# Local offline mirror of Composer dependencies (~30MB). Regenerate: offline_tools\02_REFRESH_VENDOR_SNAPSHOT_ONLINE.bat
+/offline_tools/vendor_snapshot/
+
 #-------------------------
 # IDE / Development Files
 #-------------------------
