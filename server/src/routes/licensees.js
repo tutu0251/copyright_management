@@ -1,7 +1,7 @@
-import { createCrudRoutes } from './crudFactory.js';
-import { Licensee } from '../models/Licensee.js';
+const { createCrudRoutes } = require('./crudFactory.js');
+const { Licensee } = require('../models/Licensee.js');
 
-export default createCrudRoutes({
+module.exports = createCrudRoutes({
   Model: Licensee,
   viewPerm: 'licensees.view',
   createPerm: 'licensees.create',

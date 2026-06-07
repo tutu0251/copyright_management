@@ -1,8 +1,8 @@
-import jwt from 'jsonwebtoken';
-import { User } from '../models/User.js';
-import { Role } from '../models/Role.js';
+const jwt = require('jsonwebtoken');
+const { User } = require('../models/User.js');
+const { Role } = require('../models/Role.js');
 
-export async function requireAuth(req, res, next) {
+async function requireAuth(req, res, next) {
   const header = req.headers.authorization || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
   if (!token) {
@@ -31,20 +31,20 @@ export async function requireAuth(req, res, next) {
   }
 }
 
-export function requirePermission(slug) {
+function requirePermission(slug) {
   return (req, res, next) => {
-    if (req.permissions?.has(slug)) {
+    if (req.permissions && req.permissions.has(slug)) {
       return next();
     }
     return res.status(403).json({ error: 'Forbidden', permission: slug });
   };
 }
 
-export function signToken(userId) {
+function signToken(userId) {
   return jwt.sign({ sub: userId }, process.env.JWT_SECRET || 'dev-secret', { expiresIn: '7d' });
 }
 
-export async function packUser(user) {
+async function packUser(user) {
   const populated = await User.findById(user._id)
     .populate({ path: 'roles', populate: { path: 'permissions' } })
     .lean();
@@ -64,7 +64,9 @@ export async function packUser(user) {
     displayName: populated.displayName,
     isActive: populated.isActive,
     roles,
-    primaryRole: roles[0]?.name || 'Member',
+    primaryRole: (roles[0] && roles[0].name) || 'Member',
     permissions: [...permissions],
   };
 }
+
+module.exports = { requireAuth, requirePermission, signToken, packUser };

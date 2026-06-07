@@ -1,16 +1,16 @@
-import { Router } from 'express';
-import authRoutes from './auth.js';
-import dashboardRoutes from './dashboard.js';
-import worksRoutes from './works.js';
-import ownersRoutes from './owners.js';
-import licenseesRoutes from './licensees.js';
-import licensesRoutes from './licenses.js';
-import usageReportsRoutes from './usageReports.js';
-import casesRoutes from './cases.js';
-import usersRoutes from './users.js';
-import rolesRoutes from './roles.js';
-import activitiesRoutes from './activities.js';
-import reportsRoutes from './reports.js';
+const { Router } = require('express');
+const authRoutes = require('./auth.js');
+const dashboardRoutes = require('./dashboard.js');
+const worksRoutes = require('./works.js');
+const ownersRoutes = require('./owners.js');
+const licenseesRoutes = require('./licensees.js');
+const licensesRoutes = require('./licenses.js');
+const usageReportsRoutes = require('./usageReports.js');
+const casesRoutes = require('./cases.js');
+const usersRoutes = require('./users.js');
+const rolesRoutes = require('./roles.js');
+const activitiesRoutes = require('./activities.js');
+const reportsRoutes = require('./reports.js');
 
 const router = Router();
 
@@ -29,4 +29,4 @@ router.use('/reports', reportsRoutes);
 
 router.get('/health', (_req, res) => res.json({ ok: true }));
 
-export default router;
+module.exports = router;

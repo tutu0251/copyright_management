@@ -1403,6 +1403,67 @@ table.data-table {
     }
 }
 
+/* Sidebar nav grouping (React app) */
+.app-nav__group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    margin-bottom: 0.5rem;
+}
+
+.app-nav__group-label {
+    font-size: 0.66rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    padding: 0.55rem 0.85rem 0.2rem;
+}
+
+/* Topbar breadcrumb (React app) */
+.app-topbar__crumb {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.app-topbar__crumb-root {
+    color: var(--muted);
+}
+
+.app-topbar__crumb-sep {
+    color: var(--muted);
+    opacity: 0.6;
+}
+
+.app-topbar__crumb-current {
+    color: var(--text);
+    font-weight: 600;
+}
+
+@media (max-width: 760px) {
+    .app-topbar__crumb-root,
+    .app-topbar__crumb-sep {
+        display: none;
+    }
+}
+
+@media (max-width: 900px) {
+    .app-nav__group {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .app-nav__group-label {
+        width: 100%;
+        padding: 0.4rem 0.5rem 0;
+    }
+}
+
 .flex-gap-row {
     display: flex;
     flex-wrap: wrap;

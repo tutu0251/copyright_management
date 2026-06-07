@@ -1,6 +1,6 @@
-import { AuditLog } from '../models/AuditLog.js';
+const { AuditLog } = require('../models/AuditLog.js');
 
-export async function logAudit({ actionType, entityType, entityId, actor, metadata = {} }) {
+async function logAudit({ actionType, entityType, entityId, actor, metadata = {} }) {
   await AuditLog.create({
     actionType,
     entityType,
@@ -9,3 +9,5 @@ export async function logAudit({ actionType, entityType, entityId, actor, metada
     metadata,
   });
 }
+
+module.exports = { logAudit };

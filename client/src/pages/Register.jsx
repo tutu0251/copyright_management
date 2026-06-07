@@ -27,7 +27,15 @@ export function Register() {
   return (
     <div className="auth-page">
       <div className="auth-card card">
+        <div className="app-brand" style={{ borderBottom: 'none', paddingBottom: '0.5rem', marginBottom: '0.5rem' }}>
+          <span className="app-brand__mark">CM</span>
+          <div>
+            <div className="app-brand__name">Copyright Manager</div>
+            <div className="app-brand__tag">MERN</div>
+          </div>
+        </div>
         <h1>Register</h1>
+        <p className="text-muted">Create your account to get started.</p>
         {error && <div className="alert alert--danger">{error}</div>}
         {message && <div className="alert alert--success">{message}</div>}
         <form onSubmit={submit}>

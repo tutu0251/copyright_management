@@ -1,8 +1,8 @@
-import { createCrudRoutes } from './crudFactory.js';
-import { InfringementCase } from '../models/Case.js';
-import { Work } from '../models/Work.js';
+const { createCrudRoutes } = require('./crudFactory.js');
+const { InfringementCase } = require('../models/Case.js');
+const { Work } = require('../models/Work.js');
 
-export default createCrudRoutes({
+module.exports = createCrudRoutes({
   Model: InfringementCase,
   viewPerm: 'cases.view',
   createPerm: 'cases.create',
@@ -13,8 +13,8 @@ export default createCrudRoutes({
     return {
       id: d._id.toString(),
       title: d.title,
-      work_id: d.work?.toString?.() || d.work,
-      work_title: work?.title || '—',
+      work_id: (d.work && d.work.toString ? d.work.toString() : d.work),
+      work_title: (work && work.title) || '—',
       case_status: d.caseStatus,
       priority: d.priority,
       description: d.description,

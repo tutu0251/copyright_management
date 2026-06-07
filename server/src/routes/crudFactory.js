@@ -1,7 +1,7 @@
-import { Router } from 'express';
-import { requireAuth, requirePermission } from '../middleware/auth.js';
+const { Router } = require('express');
+const { requireAuth, requirePermission } = require('../middleware/auth.js');
 
-export function createCrudRoutes({
+function createCrudRoutes({
   Model,
   viewPerm,
   createPerm,
@@ -59,3 +59,5 @@ export function createCrudRoutes({
 
   return router;
 }
+
+module.exports = { createCrudRoutes };

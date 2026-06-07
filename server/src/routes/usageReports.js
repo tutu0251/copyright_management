@@ -1,8 +1,8 @@
-import { createCrudRoutes } from './crudFactory.js';
-import { UsageReport } from '../models/UsageReport.js';
-import { Work } from '../models/Work.js';
+const { createCrudRoutes } = require('./crudFactory.js');
+const { UsageReport } = require('../models/UsageReport.js');
+const { Work } = require('../models/Work.js');
 
-export default createCrudRoutes({
+module.exports = createCrudRoutes({
   Model: UsageReport,
   viewPerm: 'usage_reports.view',
   createPerm: 'usage_reports.create',
@@ -12,8 +12,8 @@ export default createCrudRoutes({
     const work = d.work ? await Work.findById(d.work).lean() : null;
     return {
       id: d._id.toString(),
-      work_id: d.work?.toString?.() || d.work,
-      work_title: work?.title || '—',
+      work_id: (d.work && d.work.toString ? d.work.toString() : d.work),
+      work_title: (work && work.title) || '—',
       usage_type: d.usageType,
       detected_source: d.detectedSource,
       detected_at: d.detectedAt,

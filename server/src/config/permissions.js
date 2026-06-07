@@ -1,4 +1,4 @@
-export const PERMISSION_DEFS = [
+const PERMISSION_DEFS = [
   { slug: 'works.view', name: 'View works', description: 'Browse and open work records' },
   { slug: 'works.create', name: 'Create works', description: 'Register new works' },
   { slug: 'works.update', name: 'Update works', description: 'Edit work metadata' },
@@ -31,7 +31,7 @@ export const PERMISSION_DEFS = [
   { slug: 'users.manage', name: 'Manage users', description: 'Create and deactivate user accounts' },
 ];
 
-export const ROLE_PRESETS = {
+const ROLE_PRESETS = {
   admin: PERMISSION_DEFS.map((p) => p.slug),
   manager: [
     'works.view', 'works.create', 'works.update',
@@ -54,9 +54,11 @@ export const ROLE_PRESETS = {
   viewer: PERMISSION_DEFS.filter((p) => p.slug.endsWith('.view') || ['dashboard.view', 'reports.view', 'activities.view'].includes(p.slug)).map((p) => p.slug),
 };
 
-export const DEFAULT_ROLES = [
+const DEFAULT_ROLES = [
   { slug: 'admin', name: 'Administrator', description: 'Full system access' },
   { slug: 'manager', name: 'Manager', description: 'Create and update catalog, licensing, and cases' },
   { slug: 'editor', name: 'Editor', description: 'Manage works and licensing records' },
   { slug: 'viewer', name: 'Viewer', description: 'Read-only access' },
 ];
+
+module.exports = { PERMISSION_DEFS, ROLE_PRESETS, DEFAULT_ROLES };

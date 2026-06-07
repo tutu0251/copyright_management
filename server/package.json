@@ -1,9 +1,8 @@
 {
   "name": "copyright-management-server",
   "private": true,
-  "type": "module",
   "scripts": {
-    "dev": "node --watch src/index.js",
+    "dev": "nodemon src/index.js",
     "start": "node src/index.js",
     "seed": "node src/scripts/seed.js"
   },
@@ -13,7 +12,13 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.9.5",
+    "mongoose": "^6.13.0",
     "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  },
+  "engines": {
+    "node": ">=12"
   }
 }

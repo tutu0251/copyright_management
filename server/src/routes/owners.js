@@ -1,7 +1,7 @@
-import { createCrudRoutes } from './crudFactory.js';
-import { Owner } from '../models/Owner.js';
+const { createCrudRoutes } = require('./crudFactory.js');
+const { Owner } = require('../models/Owner.js');
 
-export default createCrudRoutes({
+module.exports = createCrudRoutes({
   Model: Owner,
   viewPerm: 'owners.view',
   createPerm: 'owners.create',

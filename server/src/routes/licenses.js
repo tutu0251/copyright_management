@@ -1,9 +1,9 @@
-import { createCrudRoutes } from './crudFactory.js';
-import { License } from '../models/License.js';
-import { Work } from '../models/Work.js';
-import { Licensee } from '../models/Licensee.js';
+const { createCrudRoutes } = require('./crudFactory.js');
+const { License } = require('../models/License.js');
+const { Work } = require('../models/Work.js');
+const { Licensee } = require('../models/Licensee.js');
 
-export default createCrudRoutes({
+module.exports = createCrudRoutes({
   Model: License,
   viewPerm: 'licenses.view',
   createPerm: 'licenses.create',
@@ -14,10 +14,10 @@ export default createCrudRoutes({
     const licensee = d.licensee ? await Licensee.findById(d.licensee).lean() : null;
     return {
       id: d._id.toString(),
-      work_id: d.work?.toString?.() || d.work,
-      work_title: work?.title || '—',
-      licensee_id: d.licensee?.toString?.() || d.licensee,
-      licensee_name: licensee?.name || '—',
+      work_id: (d.work && d.work.toString ? d.work.toString() : d.work),
+      work_title: (work && work.title) || '—',
+      licensee_id: (d.licensee && d.licensee.toString ? d.licensee.toString() : d.licensee),
+      licensee_name: (licensee && licensee.name) || '—',
       license_type: d.licenseType,
       license_status: d.licenseStatus,
       payment_status: d.paymentStatus,

@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 
 const licenseSchema = new mongoose.Schema(
   {
@@ -16,4 +16,6 @@ const licenseSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-export const License = mongoose.model('License', licenseSchema);
+const License = mongoose.model('License', licenseSchema);
+
+module.exports = { License };

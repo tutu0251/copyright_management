@@ -27,8 +27,15 @@ export function Login() {
   return (
     <div className="auth-page">
       <div className="auth-card card">
+        <div className="app-brand" style={{ borderBottom: 'none', paddingBottom: '0.5rem', marginBottom: '0.5rem' }}>
+          <span className="app-brand__mark">CM</span>
+          <div>
+            <div className="app-brand__name">Copyright Manager</div>
+            <div className="app-brand__tag">MERN</div>
+          </div>
+        </div>
         <h1>Sign in</h1>
-        <p className="text-muted">Copyright Management</p>
+        <p className="text-muted">Welcome back — sign in to your workspace.</p>
         {error && <div className="alert alert--danger">{error}</div>}
         <form onSubmit={submit}>
           <label className="field">

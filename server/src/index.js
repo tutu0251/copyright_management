@@ -1,13 +1,11 @@
-import 'dotenv/config';
-import express from 'express';
-import cors from 'cors';
-import morgan from 'morgan';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { connectDb } from './config/db.js';
-import apiRoutes from './routes/index.js';
+require('dotenv/config');
+const express = require('express');
+const cors = require('cors');
+const morgan = require('morgan');
+const path = require('path');
+const { connectDb } = require('./config/db.js');
+const apiRoutes = require('./routes/index.js');
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const port = Number(process.env.PORT) || 5000;
 const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
@@ -27,7 +25,11 @@ app.get('*', (req, res, next) => {
   });
 });
 
-await connectDb();
-app.listen(port, () => {
-  console.log(`API listening on http://localhost:${port}`);
-});
+async function start() {
+  await connectDb();
+  app.listen(port, () => {
+    console.log(`API listening on http://localhost:${port}`);
+  });
+}
+
+start();

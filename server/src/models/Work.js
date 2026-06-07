@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 
 const workSchema = new mongoose.Schema(
   {
@@ -20,4 +20,6 @@ const workSchema = new mongoose.Schema(
 workSchema.index({ deletedAt: 1 });
 workSchema.index({ workType: 1 });
 
-export const Work = mongoose.model('Work', workSchema);
+const Work = mongoose.model('Work', workSchema);
+
+module.exports = { Work };

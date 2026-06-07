@@ -1,8 +1,8 @@
-import { Router } from 'express';
-import { User } from '../models/User.js';
-import { Role } from '../models/Role.js';
-import { packUser, requireAuth, signToken } from '../middleware/auth.js';
-import { logAudit } from '../services/auditLog.js';
+const { Router } = require('express');
+const { User } = require('../models/User.js');
+const { Role } = require('../models/Role.js');
+const { packUser, requireAuth, signToken } = require('../middleware/auth.js');
+const { logAudit } = require('../services/auditLog.js');
 
 const router = Router();
 
@@ -58,4 +58,4 @@ router.post('/logout', requireAuth, async (req, res) => {
   res.json({ message: 'Signed out' });
 });
 
-export default router;
+module.exports = router;

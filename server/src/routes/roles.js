@@ -1,7 +1,7 @@
-import { Router } from 'express';
-import { Role } from '../models/Role.js';
-import { Permission } from '../models/Permission.js';
-import { requireAuth, requirePermission } from '../middleware/auth.js';
+const { Router } = require('express');
+const { Role } = require('../models/Role.js');
+const { Permission } = require('../models/Permission.js');
+const { requireAuth, requirePermission } = require('../middleware/auth.js');
 
 const router = Router();
 router.use(requireAuth, requirePermission('settings.manage'));
@@ -49,4 +49,4 @@ router.put('/:id/permissions', async (req, res) => {
   res.json({ ok: true });
 });
 
-export default router;
+module.exports = router;

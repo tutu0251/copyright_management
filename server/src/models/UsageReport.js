@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 
 const usageReportSchema = new mongoose.Schema(
   {
@@ -12,4 +12,6 @@ const usageReportSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-export const UsageReport = mongoose.model('UsageReport', usageReportSchema);
+const UsageReport = mongoose.model('UsageReport', usageReportSchema);
+
+module.exports = { UsageReport };

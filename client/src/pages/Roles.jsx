@@ -4,6 +4,7 @@ export function Roles() {
   return (
     <EntityListPage
       title="Roles & permissions"
+      subtitle="Access control roles and their granted permissions"
       endpoint="/roles"
       columns={[
         { key: 'name', label: 'Role' },

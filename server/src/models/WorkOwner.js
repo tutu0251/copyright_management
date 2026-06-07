@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 
 const workOwnerSchema = new mongoose.Schema(
   {
@@ -12,4 +12,6 @@ const workOwnerSchema = new mongoose.Schema(
 
 workOwnerSchema.index({ work: 1, owner: 1 });
 
-export const WorkOwner = mongoose.model('WorkOwner', workOwnerSchema);
+const WorkOwner = mongoose.model('WorkOwner', workOwnerSchema);
+
+module.exports = { WorkOwner };

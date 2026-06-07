@@ -1,8 +1,8 @@
-import { Router } from 'express';
-import { Work } from '../models/Work.js';
-import { License } from '../models/License.js';
-import { createCrudRoutes } from './crudFactory.js';
-import { requireAuth, requirePermission } from '../middleware/auth.js';
+const { Router } = require('express');
+const { Work } = require('../models/Work.js');
+const { License } = require('../models/License.js');
+const { createCrudRoutes } = require('./crudFactory.js');
+const { requireAuth, requirePermission } = require('../middleware/auth.js');
 
 const crud = createCrudRoutes({
   Model: Work,
@@ -48,4 +48,4 @@ router.get('/meta/types', requireAuth, requirePermission('works.view'), async (_
   res.json({ types: types.filter(Boolean) });
 });
 
-export default router;
+module.exports = router;

@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 
 const caseNoteSchema = new mongoose.Schema({
   body: { type: String, required: true },
@@ -20,4 +20,6 @@ const caseSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-export const InfringementCase = mongoose.model('InfringementCase', caseSchema);
+const InfringementCase = mongoose.model('InfringementCase', caseSchema);
+
+module.exports = { InfringementCase };

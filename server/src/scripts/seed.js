@@ -1,16 +1,16 @@
-import 'dotenv/config';
-import mongoose from 'mongoose';
-import { connectDb } from '../config/db.js';
-import { Permission } from '../models/Permission.js';
-import { Role } from '../models/Role.js';
-import { User } from '../models/User.js';
-import { Work } from '../models/Work.js';
-import { Owner } from '../models/Owner.js';
-import { Licensee } from '../models/Licensee.js';
-import { License } from '../models/License.js';
-import { UsageReport } from '../models/UsageReport.js';
-import { InfringementCase } from '../models/Case.js';
-import { PERMISSION_DEFS, ROLE_PRESETS, DEFAULT_ROLES } from '../config/permissions.js';
+require('dotenv/config');
+const mongoose = require('mongoose');
+const { connectDb } = require('../config/db.js');
+const { Permission } = require('../models/Permission.js');
+const { Role } = require('../models/Role.js');
+const { User } = require('../models/User.js');
+const { Work } = require('../models/Work.js');
+const { Owner } = require('../models/Owner.js');
+const { Licensee } = require('../models/Licensee.js');
+const { License } = require('../models/License.js');
+const { UsageReport } = require('../models/UsageReport.js');
+const { InfringementCase } = require('../models/Case.js');
+const { PERMISSION_DEFS, ROLE_PRESETS, DEFAULT_ROLES } = require('../config/permissions.js');
 
 const WORK_TITLES = [
   'Aurora Fields — Stock Photo Pack',

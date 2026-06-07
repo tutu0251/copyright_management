@@ -1,9 +1,9 @@
-import { Router } from 'express';
-import { Work } from '../models/Work.js';
-import { License } from '../models/License.js';
-import { UsageReport } from '../models/UsageReport.js';
-import { InfringementCase } from '../models/Case.js';
-import { requireAuth, requirePermission } from '../middleware/auth.js';
+const { Router } = require('express');
+const { Work } = require('../models/Work.js');
+const { License } = require('../models/License.js');
+const { UsageReport } = require('../models/UsageReport.js');
+const { InfringementCase } = require('../models/Case.js');
+const { requireAuth, requirePermission } = require('../middleware/auth.js');
 
 const router = Router();
 router.use(requireAuth, requirePermission('reports.view'));
@@ -27,4 +27,4 @@ router.get('/licenses', async (_req, res) => {
   res.json({ items });
 });
 
-export default router;
+module.exports = router;

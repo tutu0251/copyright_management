@@ -4,6 +4,7 @@ export function Licensees() {
   return (
     <EntityListPage
       title="Licensees"
+      subtitle="Organizations and individuals licensing your works"
       endpoint="/licensees"
       columns={[
         { key: 'name', label: 'Name' },

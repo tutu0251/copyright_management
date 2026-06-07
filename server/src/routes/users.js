@@ -1,7 +1,7 @@
-import { Router } from 'express';
-import { User } from '../models/User.js';
-import { Role } from '../models/Role.js';
-import { requireAuth, requirePermission, packUser } from '../middleware/auth.js';
+const { Router } = require('express');
+const { User } = require('../models/User.js');
+const { Role } = require('../models/Role.js');
+const { requireAuth, requirePermission, packUser } = require('../middleware/auth.js');
 
 const router = Router();
 router.use(requireAuth, requirePermission('users.manage'));
@@ -40,10 +40,10 @@ router.post('/', async (req, res) => {
 });
 
 router.patch('/:id/active', async (req, res) => {
-  const isActive = Boolean(req.body.is_active ?? req.body.isActive);
+  const isActive = Boolean(req.body.is_active != null ? req.body.is_active : req.body.isActive);
   const user = await User.findByIdAndUpdate(req.params.id, { isActive }, { new: true });
   if (!user) return res.status(404).json({ error: 'Not found' });
   res.json({ ok: true });
 });
 
-export default router;
+module.exports = router;

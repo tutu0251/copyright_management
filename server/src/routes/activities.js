@@ -1,6 +1,6 @@
-import { Router } from 'express';
-import { AuditLog } from '../models/AuditLog.js';
-import { requireAuth, requirePermission } from '../middleware/auth.js';
+const { Router } = require('express');
+const { AuditLog } = require('../models/AuditLog.js');
+const { requireAuth, requirePermission } = require('../middleware/auth.js');
 
 const router = Router();
 router.use(requireAuth, requirePermission('activities.view'));
@@ -16,7 +16,7 @@ router.get('/', async (req, res) => {
     items: logs.map((r) => ({
       id: r._id.toString(),
       time: r.createdAt,
-      actor: r.actor?.displayName || r.actor?.email || '—',
+      actor: (r.actor && r.actor.displayName) || (r.actor && r.actor.email) || '—',
       action: r.actionType,
       entity: r.entityType ? `${r.entityType} ${r.entityId || ''}`.trim() : '—',
       metadata: r.metadata,
@@ -24,4 +24,4 @@ router.get('/', async (req, res) => {
   });
 });
 
-export default router;
+module.exports = router;

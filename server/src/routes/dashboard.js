@@ -1,12 +1,11 @@
-import { Router } from 'express';
-import { Work } from '../models/Work.js';
-import { Owner } from '../models/Owner.js';
-import { License } from '../models/License.js';
-import { Licensee } from '../models/Licensee.js';
-import { UsageReport } from '../models/UsageReport.js';
-import { InfringementCase } from '../models/Case.js';
-import { AuditLog } from '../models/AuditLog.js';
-import { requireAuth, requirePermission } from '../middleware/auth.js';
+const { Router } = require('express');
+const { Work } = require('../models/Work.js');
+const { Owner } = require('../models/Owner.js');
+const { License } = require('../models/License.js');
+const { UsageReport } = require('../models/UsageReport.js');
+const { InfringementCase } = require('../models/Case.js');
+const { AuditLog } = require('../models/AuditLog.js');
+const { requireAuth, requirePermission } = require('../middleware/auth.js');
 
 const router = Router();
 router.use(requireAuth, requirePermission('dashboard.view'));
@@ -52,8 +51,8 @@ router.get('/', async (req, res) => {
     { $match: { deletedAt: null, paymentStatus: { $in: ['unpaid', 'partial'] } } },
     { $group: { _id: null, total: { $sum: '$feeAmount' } } },
   ]);
-  const licenseRevenue = paidAgg[0]?.total || 0;
-  const licenseUnpaid = unpaidAgg[0]?.total || 0;
+  const licenseRevenue = (paidAgg[0] && paidAgg[0].total) || 0;
+  const licenseUnpaid = (unpaidAgg[0] && unpaidAgg[0].total) || 0;
 
   const totalCases = await InfringementCase.countDocuments({ deletedAt: null });
   const openCases = await InfringementCase.countDocuments({
@@ -141,7 +140,7 @@ router.get('/', async (req, res) => {
     },
     activity: activity.map((r) => ({
       time: r.createdAt,
-      actor: r.actor?.displayName || r.actor?.email || '—',
+      actor: (r.actor && r.actor.displayName) || (r.actor && r.actor.email) || '—',
       action: r.actionType,
       entity: r.entityType ? `${r.entityType} ${r.entityId || ''}`.trim() : '—',
       type: r.entityType || 'audit',
@@ -153,7 +152,7 @@ router.get('/', async (req, res) => {
     })),
     recentUsageDetections: recentUsage.map((r) => ({
       id: r._id.toString(),
-      work_title: r.work?.title || '—',
+      work_title: (r.work && r.work.title) || '—',
       source: r.detectedSource,
       detected_at: r.detectedAt,
       usage_label: r.usageType,
@@ -164,4 +163,4 @@ router.get('/', async (req, res) => {
   });
 });
 
-export default router;
+module.exports = router;

@@ -1,5 +1,5 @@
-import mongoose from 'mongoose';
-import bcrypt from 'bcryptjs';
+const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema(
   {
@@ -21,4 +21,6 @@ userSchema.statics.hashPassword = function (plain) {
   return bcrypt.hash(plain, 12);
 };
 
-export const User = mongoose.model('User', userSchema);
+const User = mongoose.model('User', userSchema);
+
+module.exports = { User };
