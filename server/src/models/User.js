@@ -1,26 +1,27 @@
-const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const { createModel } = require('../lib/model.js');
 
-const userSchema = new mongoose.Schema(
-  {
-    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-    passwordHash: { type: String, required: true },
-    displayName: { type: String, required: true },
-    isActive: { type: Boolean, default: true },
-    roles: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Role' }],
-    lastLoginAt: { type: Date },
+const User = createModel('User', {
+  collection: 'users',
+  timestamps: true,
+  fields: {
+    email: { lowercase: true, trim: true },
+    passwordHash: {},
+    displayName: {},
+    isActive: { default: true },
+    roles: { ref: 'Role', array: true },
+    lastLoginAt: {},
   },
-  { timestamps: true },
-);
-
-userSchema.methods.verifyPassword = function (plain) {
-  return bcrypt.compare(plain, this.passwordHash);
-};
-
-userSchema.statics.hashPassword = function (plain) {
-  return bcrypt.hash(plain, 12);
-};
-
-const User = mongoose.model('User', userSchema);
+  methods: {
+    verifyPassword(plain) {
+      return bcrypt.compare(plain, this.passwordHash);
+    },
+  },
+  statics: {
+    hashPassword(plain) {
+      return bcrypt.hash(plain, 12);
+    },
+  },
+});
 
 module.exports = { User };

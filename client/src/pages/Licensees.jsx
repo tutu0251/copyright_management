@@ -1,3 +1,4 @@
+import React from 'react';
 import { EntityListPage } from '../components/EntityListPage';
 
 export function Licensees() {

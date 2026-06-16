@@ -1,17 +1,16 @@
-const mongoose = require('mongoose');
+const { createModel } = require('../lib/model.js');
 
-const usageReportSchema = new mongoose.Schema(
-  {
-    work: { type: mongoose.Schema.Types.ObjectId, ref: 'Work', required: true },
-    usageType: { type: String, default: 'suspected' },
-    detectedSource: { type: String, default: '' },
-    detectedAt: { type: Date, default: Date.now },
-    notes: { type: String, default: '' },
-    deletedAt: { type: Date, default: null },
+const UsageReport = createModel('UsageReport', {
+  collection: 'usagereports',
+  timestamps: true,
+  fields: {
+    work: { ref: 'Work' },
+    usageType: { default: 'suspected' },
+    detectedSource: { default: '' },
+    detectedAt: { default: Date.now },
+    notes: { default: '' },
+    deletedAt: { default: null },
   },
-  { timestamps: true },
-);
-
-const UsageReport = mongoose.model('UsageReport', usageReportSchema);
+});
 
 module.exports = { UsageReport };

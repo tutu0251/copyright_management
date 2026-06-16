@@ -1,16 +1,15 @@
-const mongoose = require('mongoose');
+const { createModel } = require('../lib/model.js');
 
-const auditLogSchema = new mongoose.Schema(
-  {
-    actionType: { type: String, required: true },
-    entityType: { type: String, default: '' },
-    entityId: { type: String, default: '' },
-    actor: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    metadata: { type: mongoose.Schema.Types.Mixed, default: {} },
+const AuditLog = createModel('AuditLog', {
+  collection: 'auditlogs',
+  timestamps: true,
+  fields: {
+    actionType: {},
+    entityType: { default: '' },
+    entityId: { default: '' },
+    actor: { ref: 'User' },
+    metadata: { default: () => ({}) },
   },
-  { timestamps: true },
-);
-
-const AuditLog = mongoose.model('AuditLog', auditLogSchema);
+});
 
 module.exports = { AuditLog };

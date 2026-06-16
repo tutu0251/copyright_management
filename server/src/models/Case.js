@@ -1,25 +1,21 @@
-const mongoose = require('mongoose');
+const { createModel } = require('../lib/model.js');
 
-const caseNoteSchema = new mongoose.Schema({
-  body: { type: String, required: true },
-  author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  createdAt: { type: Date, default: Date.now },
-});
-
-const caseSchema = new mongoose.Schema(
-  {
-    title: { type: String, required: true },
-    work: { type: mongoose.Schema.Types.ObjectId, ref: 'Work' },
-    usageReport: { type: mongoose.Schema.Types.ObjectId, ref: 'UsageReport' },
-    caseStatus: { type: String, default: 'open' },
-    priority: { type: String, default: 'medium' },
-    description: { type: String, default: '' },
-    notes: [caseNoteSchema],
-    deletedAt: { type: Date, default: null },
+// Embedded case notes are stored inline on the document; ObjectId fields inside
+// the array (author) are not auto-cast by the data layer, so callers that add
+// notes should cast as needed. The current routes create cases without notes.
+const InfringementCase = createModel('InfringementCase', {
+  collection: 'infringementcases',
+  timestamps: true,
+  fields: {
+    title: {},
+    work: { ref: 'Work' },
+    usageReport: { ref: 'UsageReport' },
+    caseStatus: { default: 'open' },
+    priority: { default: 'medium' },
+    description: { default: '' },
+    notes: { default: () => [] },
+    deletedAt: { default: null },
   },
-  { timestamps: true },
-);
-
-const InfringementCase = mongoose.model('InfringementCase', caseSchema);
+});
 
 module.exports = { InfringementCase };

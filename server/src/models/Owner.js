@@ -1,15 +1,14 @@
-const mongoose = require('mongoose');
+const { createModel } = require('../lib/model.js');
 
-const ownerSchema = new mongoose.Schema(
-  {
-    legalName: { type: String, required: true },
-    entityType: { type: String, default: 'individual' },
-    email: { type: String, default: '' },
-    deletedAt: { type: Date, default: null },
+const Owner = createModel('Owner', {
+  collection: 'owners',
+  timestamps: true,
+  fields: {
+    legalName: {},
+    entityType: { default: 'individual' },
+    email: { default: '' },
+    deletedAt: { default: null },
   },
-  { timestamps: true },
-);
-
-const Owner = mongoose.model('Owner', ownerSchema);
+});
 
 module.exports = { Owner };

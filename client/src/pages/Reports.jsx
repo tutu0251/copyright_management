@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { api } from '../api';
 import { ChartCard, CHART_PALETTE, themedScales, themedLegend } from '../components/ChartCard';
 import { StatusBadge } from '../components/StatusBadge';

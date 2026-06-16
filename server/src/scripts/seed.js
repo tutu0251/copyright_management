@@ -1,6 +1,5 @@
 require('dotenv/config');
-const mongoose = require('mongoose');
-const { connectDb } = require('../config/db.js');
+const { connectDb, closeDb } = require('../config/db.js');
 const { Permission } = require('../models/Permission.js');
 const { Role } = require('../models/Role.js');
 const { User } = require('../models/User.js');
@@ -117,7 +116,7 @@ async function seed() {
   }
 
   console.log('Seed complete.');
-  await mongoose.disconnect();
+  await closeDb();
 }
 
 seed().catch((err) => {

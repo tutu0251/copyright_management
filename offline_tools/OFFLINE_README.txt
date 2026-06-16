@@ -7,7 +7,10 @@ TARGET COMPATIBILITY
 - Frontend: bundled with Webpack 4 + Babel 7, transpiled + polyfilled (core-js 3)
   to run in Firefox 52 ESR (the last Firefox for Windows XP). No native ES modules
   are sent to the browser; everything is one classic <script> bundle.
-- Database: MongoDB. mongoose 6 is used (compatible with Node 12).
+- Database: MongoDB. The native mongodb 3.5.4 driver is used (compatible with
+  Node 12); there is NO Mongoose. A small wrapper at server/src/lib/model.js
+  provides the model API. Pinned stack: node 12.22.3, mongodb 3.5.4,
+  express 4.15.4, react/react-dom 16.12.0.
 
 WHAT IS INCLUDED
 ----------------

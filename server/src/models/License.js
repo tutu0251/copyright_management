@@ -1,21 +1,20 @@
-const mongoose = require('mongoose');
+const { createModel } = require('../lib/model.js');
 
-const licenseSchema = new mongoose.Schema(
-  {
-    work: { type: mongoose.Schema.Types.ObjectId, ref: 'Work', required: true },
-    licensee: { type: mongoose.Schema.Types.ObjectId, ref: 'Licensee', required: true },
-    licenseType: { type: String, default: 'non_exclusive' },
-    licenseStatus: { type: String, default: 'draft' },
-    paymentStatus: { type: String, default: 'unpaid' },
-    feeAmount: { type: Number, default: 0 },
-    territory: { type: String, default: '' },
-    startDate: { type: Date },
-    endDate: { type: Date },
-    deletedAt: { type: Date, default: null },
+const License = createModel('License', {
+  collection: 'licenses',
+  timestamps: true,
+  fields: {
+    work: { ref: 'Work' },
+    licensee: { ref: 'Licensee' },
+    licenseType: { default: 'non_exclusive' },
+    licenseStatus: { default: 'draft' },
+    paymentStatus: { default: 'unpaid' },
+    feeAmount: { default: 0 },
+    territory: { default: '' },
+    startDate: {},
+    endDate: {},
+    deletedAt: { default: null },
   },
-  { timestamps: true },
-);
-
-const License = mongoose.model('License', licenseSchema);
+});
 
 module.exports = { License };

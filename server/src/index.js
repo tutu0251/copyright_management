@@ -1,5 +1,6 @@
 require('dotenv/config');
 const express = require('express');
+const bodyParser = require('body-parser');
 const cors = require('cors');
 const morgan = require('morgan');
 const path = require('path');
@@ -12,7 +13,8 @@ const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
 
 app.use(morgan('dev'));
 app.use(cors({ origin: clientUrl, credentials: true }));
-app.use(express.json());
+// express.json() did not exist until Express 4.16; on 4.15.x use body-parser.
+app.use(bodyParser.json());
 
 app.use('/api', apiRoutes);
 

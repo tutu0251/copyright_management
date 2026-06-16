@@ -1,3 +1,5 @@
+import React from 'react';
+
 // Maps free-text status values to one of the design-system badge tones.
 const TONES = {
   success: ['active', 'registered', 'resolved', 'closed', 'paid', 'authorized', 'licensed', 'approved', 'low', 'yes', 'verified', 'public domain', 'public_domain'],

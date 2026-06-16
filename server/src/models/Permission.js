@@ -1,14 +1,13 @@
-const mongoose = require('mongoose');
+const { createModel } = require('../lib/model.js');
 
-const permissionSchema = new mongoose.Schema(
-  {
-    slug: { type: String, required: true, unique: true },
-    name: { type: String, required: true },
-    description: { type: String, default: '' },
+const Permission = createModel('Permission', {
+  collection: 'permissions',
+  timestamps: true,
+  fields: {
+    slug: {},
+    name: {},
+    description: { default: '' },
   },
-  { timestamps: true },
-);
-
-const Permission = mongoose.model('Permission', permissionSchema);
+});
 
 module.exports = { Permission };
