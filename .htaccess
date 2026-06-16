@@ -1,0 +1,17 @@
+# Clean URLs: route everything that isn't a real file/dir through index.php.
+<IfModule mod_rewrite.c>
+	RewriteEngine On
+	RewriteBase /
+
+	# Block access to the framework and application internals.
+	RewriteRule ^(system|application)/ index.php?/$1 [L]
+
+	RewriteCond %{REQUEST_FILENAME} !-f
+	RewriteCond %{REQUEST_FILENAME} !-d
+	RewriteRule ^(.*)$ index.php?/$1 [L]
+</IfModule>
+
+<IfModule !mod_rewrite.c>
+	# Without mod_rewrite, fall back to index.php.
+	ErrorDocument 404 /index.php
+</IfModule>

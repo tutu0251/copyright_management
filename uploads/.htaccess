@@ -1,0 +1,7 @@
+# Uploaded files are served only through the assets controller (which enforces
+# RBAC). Deny direct web access and never execute anything in here as a script.
+Deny from all
+
+<IfModule mod_php5.c>
+	php_flag engine off
+</IfModule>

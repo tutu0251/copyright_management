@@ -1,112 +1,106 @@
-# Copyright Management (MERN)
+# Copyright Management (CodeIgniter 2.1.3)
 
-MongoDB, Express, React, and Node.js application for copyright / asset / license
-management. Migrated from the original PHP/CodeIgniter product to a MERN stack.
+A server-rendered **PHP / MySQL** application for copyright / asset / license
+management — works, owners, licensees, licenses, usage reports, infringement
+cases, file assets, users, roles and permissions, a dashboard, reports, and an
+audit activity log. Built on **CodeIgniter 2.1.3**.
 
-> **Legacy target.** This project is deliberately pinned to an old toolchain so it
-> runs on **Node.js 12** and is browsable on **Firefox 52 ESR** (the last Firefox
-> for Windows XP). Do **not** "modernize" the stack — see
-> [Depends.MD](Depends.MD) for the exact pins and the reasons behind them.
+> **Stack history.** This product was previously ported to a MERN stack and has
+> now been refactored **back** to classic LAMP (CodeIgniter 2.1.3 / PHP 5.6 /
+> MySQL 5.x). The MERN tree has been removed.
 
 ## Stack
 
 | Layer | Technology | Notes |
 |-------|------------|-------|
-| **M** — MongoDB | server **≤ 4.2** | Native `mongodb` **3.5.4** driver (no Mongoose); driver wire protocol caps at MongoDB 4.2 |
-| **E** — Express | **4.15.4** | CommonJS; uses `body-parser` (no `express.json()` on 4.15.x) |
-| **R** — React | **16.12.0** | Built with **Webpack 4 + Babel 7** (not Vite); Babel preset-react `runtime: 'classic'` |
-| **N** — Node.js | **12.22.3** | See `.nvmrc`; `engines.node >= 12` |
-
-There are **no npm workspaces** (npm 6 lacks them). The **root `package.json` lists
-all dependencies**; `server/` and `client/` resolve modules upward. Install once at
-the root — do **not** run `npm install` inside the subfolders.
+| Framework | **CodeIgniter 2.1.3** | Classic MVC; server-rendered PHP views |
+| Language | **PHP 5.6.2** | `mysqli` DB driver; `password_hash()`/`password_verify()` (bcrypt) |
+| Database | **MySQL 5.x** | InnoDB, utf8; schema in `sql/` |
+| Auth | **CI session** (encrypted cookie) | Session-based login; RBAC by permission slug |
+| UI | Plain CSS (`assets/css/app.css`) | No SPA, no build step; works on old browsers |
 
 ## Prerequisites
 
-- **Node.js 12.x** (12.22.3 recommended — `nvm use` reads `.nvmrc`)
-- **MongoDB ≤ 4.2** reachable on `mongodb://127.0.0.1:27017` (or set `MONGODB_URI`)
-
-> Building on a **newer Node (17+)** requires `set NODE_OPTIONS=--openssl-legacy-provider`
-> for the Webpack 4 build (see `NODE_OPTIONS` file / `run.bat`). Not needed on Node 12 itself.
+- **PHP 5.6.2** with the `mysqli` extension (and `gd`/`fileinfo` recommended).
+- **MySQL 5.x** reachable on `127.0.0.1:3306`.
+- A web server with URL rewriting (Apache + `mod_rewrite`), or PHP's built-in
+  server for local development.
+- The official **CodeIgniter 2.1.3** release — drop its **`system/`** folder next
+  to `index.php` (it is intentionally gitignored; we ship only `application/`).
 
 ## Quick start
 
 ```bash
-npm install                          # install ALL deps at the repo root
-copy server\.env.example server\.env  # Windows; edit MONGODB_URI / JWT_SECRET
-npm run seed                         # roles, permissions, admin user, sample data
-npm run dev                          # API (:5000) + Webpack dev server (:5173)
+# 1. Put the CodeIgniter 2.1.3 `system/` folder in the project root.
+
+# 2. Create the database and load schema + seed.
+mysql -u root -e "CREATE DATABASE copyright_management CHARACTER SET utf8 COLLATE utf8_general_ci;"
+mysql -u root copyright_management < sql/schema.sql
+mysql -u root copyright_management < sql/seed.sql
+
+# 3. Set DB credentials in application/config/database.php
+#    (or create application/config/database.local.php — gitignored).
+#    Also set a real $config['encryption_key'] in application/config/config.php.
+
+# 4. Serve it.
+php -S localhost:8080            # dev: http://localhost:8080
+#   …or point an Apache vhost at the project root (uses the bundled .htaccess).
 ```
 
-Open **http://localhost:5173** and sign in with `admin@example.com` / `Admin123!`
-after seeding. **Change this password in any shared environment.**
+Sign in at the site root with **`admin@example.com` / `Admin123!`**.
+**Change this password in any shared environment.**
 
-### Production-style run
-
-```bash
-npm run build    # Webpack production bundle -> client/dist
-npm start        # Express serves client/dist + /api on :5000
-```
-
-Then browse **http://localhost:5000**.
-
-## Scripts (run from repo root)
-
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | API (`nodemon`, :5000) + Webpack dev server (:5173, proxies `/api` → :5000) |
-| `npm run dev:server` | API only |
-| `npm run dev:client` | Webpack dev server only |
-| `npm run build` | Production React build → `client/dist` |
-| `npm start` | Express serves `client/dist` and `/api` on :5000 |
-| `npm run seed` | Seed roles, permissions, admin user, sample data |
-
-## Configuration
-
-Server env vars (`server/.env`, copied from `server/.env.example`):
-
-| Variable | Default | Purpose |
-|----------|---------|---------|
-| `PORT` | `5000` | API port |
-| `MONGODB_URI` | `mongodb://127.0.0.1:27017/copyright_management` | Mongo connection |
-| `JWT_SECRET` | `dev-secret` (fallback) | **Set a long random value in production** |
-| `CLIENT_URL` | `http://localhost:5173` | CORS origin for the dev UI |
-
-Client (build-time): `VITE_API_URL` overrides the API base (defaults to `/api`).
-The name is historical — Webpack's `DefinePlugin` injects it; there is no Vite here.
-
-## Offline installation
-
-For air-gapped / Windows XP machines, see **`offline_tools/OFFLINE_README.txt`**.
-
-**While online (once):** run `offline_tools\10_PREPARE_OFFLINE_PACK_ONLINE.bat` —
-installs deps, builds the client, and mirrors `node_modules` into
-`offline_tools\node_modules_snapshot\`.
-
-**On the offline PC:**
-
-1. `01_INSTALL_NODE_MODULES_OFFLINE.bat`
-2. `05_COPY_ENV_FROM_SAMPLE.bat`
-3. Start MongoDB → `08_RUN_SEED.bat`
-4. `09_START_DEV.bat`
-
-Copy the whole project folder to USB, including `offline_tools\node_modules_snapshot\`.
+> Using PHP's built-in server, the bundled `.htaccess` is ignored; CodeIgniter
+> still routes correctly because `index.php` is the front controller and
+> `$config['index_page']` is empty. For pretty URLs under Apache, ensure
+> `mod_rewrite` is enabled.
 
 ## Project layout
 
 ```
-client/          React 16 UI, built with Webpack 4 + Babel 7
-server/          Express 4.15 API (CommonJS, native mongodb driver)
-  src/lib/       model.js (mini-ODM over the native driver), gridfs.js (asset storage)
-  src/models/    thin schema defs (Work, License, Licensee, Owner, Case, ...)
-  src/routes/    REST routes + crudFactory; auth, dashboard, reports, assets
-offline_tools/   Offline npm snapshot + numbered .bat scripts
-package.json     Single root manifest — lists ALL deps (no workspaces)
+index.php                front controller (BASEPATH→system, APPPATH→application)
+.htaccess                clean URLs; blocks system/ & application/
+system/                  CodeIgniter 2.1.3 core (you provide; gitignored)
+application/
+  config/                config, database, routes, autoload, constants
+  core/                  MY_Controller (Base/Public/Secure + RBAC), MY_Model
+  helpers/               auth_helper (has_perm, current_user, audit_log, badge…)
+  models/                user, role, permission, work, owner, licensee,
+                         license, usagereport, case, asset, audit
+  controllers/           auth dashboard works owners licensees licenses
+                         usage_reports cases activities reports users roles assets
+  views/                 layouts/, auth/, dashboard/, works/, … , errors/403
+assets/css/app.css       UI stylesheet
+uploads/                 uploaded asset files (gitignored; per-work subfolders)
+sql/                     schema.sql, seed.sql
 ```
 
-## API
+## Authentication & permissions
 
-REST API under `/api` with JWT auth (`Authorization: Bearer <token>`; binary assets
-also accept `?token=`). Authorization is role/permission based and enforced
-server-side per route via `requireAuth` / `requirePermission`. Permission slugs
-match the original product (e.g. `works.view`, `licenses.create`).
+- Login creates a CI session (`user_id`). `Secure_Controller` loads the user and
+  re-derives their permission slugs from `roles → role_permissions → permissions`
+  on every request, and `require_perm('works.create')` gates each action.
+- Permission slugs (`works.view`, `licenses.create`, `cases.status_update`, …) and
+  the default roles (admin / manager / editor / viewer) match the original
+  product; see `sql/seed.sql`.
+- The sidebar hides links the current user can't access (`has_perm()`); the server
+  still enforces every permission independently (a hidden link is also a 403).
+
+## File assets
+
+Uploaded files are stored on disk under `uploads/work_<id>/` (random stored
+names) with a metadata row in `work_assets`. The `assets` controller streams
+downloads with `inline`/`attachment` disposition and **HTTP Range** support so
+audio/video can seek. The `uploads/` folder ships with an `.htaccess` that denies
+direct web access and script execution.
+
+## Configuration
+
+| Where | Key | Purpose |
+|-------|-----|---------|
+| `application/config/database.php` | `hostname/username/password/database` | MySQL connection (`mysqli`) |
+| `application/config/config.php` | `encryption_key` | **Set a long random value** — secures the session cookie |
+| `application/config/config.php` | `base_url` | Optional; set if auto-detection misbehaves |
+
+See [Depends.MD](Depends.MD) for the dependency rationale and [USAGE.md](USAGE.md)
+for day-to-day operation.

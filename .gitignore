@@ -1,19 +1,26 @@
 #-------------------------
-# Environment
+# CodeIgniter 2.1.3 framework core — dropped in locally, not committed.
 #-------------------------
-.env
-.env.*
-!.env.example
-server/.env
+/system/
 
 #-------------------------
-# Node / MERN
+# Runtime
 #-------------------------
-node_modules/
-client/dist/
+/application/logs/*.php
+/application/cache/*
+!/application/cache/index.html
 
-# Offline npm mirror (regenerate: offline_tools\02_REFRESH_NODE_MODULES_SNAPSHOT_ONLINE.bat)
-/offline_tools/node_modules_snapshot/
+#-------------------------
+# Uploaded asset files (metadata lives in MySQL); keep the folder itself.
+#-------------------------
+/uploads/*
+!/uploads/.gitkeep
+!/uploads/.htaccess
+
+#-------------------------
+# Local config overrides
+#-------------------------
+/application/config/database.local.php
 
 #-------------------------
 # OS / IDE
@@ -26,9 +33,8 @@ Desktop.ini
 *.iml
 
 #-------------------------
-# Logs
+# Logs / archives
 #-------------------------
 *.log
-npm-debug.log*
 offline_tools/*
 0606_SRC_KNC_toOYG_copyright_management.rar
