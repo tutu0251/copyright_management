@@ -1,6 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { api } from '../api';
+import { useAuth } from '../context/AuthContext';
 import { StatusBadge } from './StatusBadge';
+import { EntityForm } from './EntityForm';
 
 const PAGE_SIZE = 12;
 
@@ -44,7 +46,7 @@ function downloadCsv(filename, csv) {
   URL.revokeObjectURL(url);
 }
 
-function TableSkeleton({ cols }) {
+function TableSkeleton() {
   return (
     <div className="ui-table-card">
       <div style={{ padding: '1rem 1.25rem' }} className="stack">
@@ -56,29 +58,58 @@ function TableSkeleton({ cols }) {
   );
 }
 
-export function EntityListPage({ title, subtitle, endpoint, columns, emptyLabel = 'No records yet.', searchable = true }) {
+function singularize(title) {
+  if (!title) return 'record';
+  const t = title.replace(/\s*\(.*\)\s*$/, '').trim().toLowerCase();
+  return t.endsWith('s') ? t.slice(0, -1) : t;
+}
+
+export function EntityListPage({
+  title,
+  subtitle,
+  endpoint,
+  columns,
+  emptyLabel = 'No records yet.',
+  searchable = true,
+  // CRUD config (optional): when `fields` + `permissionPrefix` are provided the
+  // page gains New / Edit / Delete controls gated by the matching permissions.
+  fields,
+  permissionPrefix,
+  entityName,
+  // Extra per-row controls, e.g. asset management. (row, { reload }) => node
+  rowActions,
+  // Optional stat strip rendered under the page head. (items) => node
+  summary,
+}) {
+  const { can } = useAuth();
   const [items, setItems] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState({ key: null, dir: 'asc' });
   const [page, setPage] = useState(1);
+  const [editing, setEditing] = useState(null); // { mode: 'create' } | { mode: 'edit', row }
 
-  useEffect(() => {
-    let cancelled = false;
+  const noun = entityName || singularize(title);
+  const canCreate = !!(fields && permissionPrefix && can(`${permissionPrefix}.create`));
+  const canUpdate = !!(fields && permissionPrefix && can(`${permissionPrefix}.update`));
+  const canDelete = !!(permissionPrefix && can(`${permissionPrefix}.delete`));
+  const hasRowActions = !!(rowActions || canUpdate || canDelete);
+
+  const load = useCallback(async () => {
     setLoading(true);
-    (async () => {
-      try {
-        const data = await api(endpoint);
-        if (!cancelled) setItems(data.items || []);
-      } catch (e) {
-        if (!cancelled) setError(e.message);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
+    try {
+      const data = await api(endpoint);
+      setItems(data.items || []);
+      setError('');
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
   }, [endpoint]);
+
+  useEffect(() => { load(); }, [load]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -108,6 +139,7 @@ export function EntityListPage({ title, subtitle, endpoint, columns, emptyLabel 
   const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
   const pageItems = sorted.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const totalCols = columns.length + (hasRowActions ? 1 : 0);
 
   useEffect(() => { setPage(1); }, [query, sort]);
 
@@ -120,6 +152,27 @@ export function EntityListPage({ title, subtitle, endpoint, columns, emptyLabel 
     downloadCsv(`${(title || 'export').toLowerCase().replace(/\s+/g, '-')}.csv`, csv);
   };
 
+  const submitForm = async (payload) => {
+    if (editing && editing.mode === 'edit') {
+      await api(`${endpoint}/${editing.row.id}`, { method: 'PUT', body: JSON.stringify(payload) });
+    } else {
+      await api(endpoint, { method: 'POST', body: JSON.stringify(payload) });
+    }
+    setEditing(null);
+    await load();
+  };
+
+  const removeRow = async (row) => {
+    const label = row.title || row.name || row.legal_name || row.legalName || 'this record';
+    if (!window.confirm(`Delete ${label}? This cannot be undone.`)) return;
+    try {
+      await api(`${endpoint}/${row.id}`, { method: 'DELETE' });
+      await load();
+    } catch (e) {
+      setError(e.message);
+    }
+  };
+
   return (
     <div className="stack" style={{ gap: '1.25rem' }}>
       <div className="app-page-head" style={{ padding: 0 }}>
@@ -129,7 +182,9 @@ export function EntityListPage({ title, subtitle, endpoint, columns, emptyLabel 
         </p>
       </div>
 
-      {error && <div className="alert alert--danger">{error}</div>}
+      {error && <div className="alert alert--danger" style={{ color: 'var(--danger)' }}>{error}</div>}
+
+      {summary && !loading && summary(items)}
 
       <div className="toolbar">
         <div className="toolbar__grow">
@@ -150,11 +205,16 @@ export function EntityListPage({ title, subtitle, endpoint, columns, emptyLabel 
           <button type="button" className="btn btn--secondary btn--sm" onClick={exportCsv} disabled={loading || !sorted.length}>
             Export CSV
           </button>
+          {canCreate && (
+            <button type="button" className="btn btn--primary btn--sm" onClick={() => setEditing({ mode: 'create' })}>
+              + New {noun}
+            </button>
+          )}
         </div>
       </div>
 
       {loading ? (
-        <TableSkeleton cols={columns.length} />
+        <TableSkeleton />
       ) : (
         <>
           <div className="ui-table-card">
@@ -180,12 +240,13 @@ export function EntityListPage({ title, subtitle, endpoint, columns, emptyLabel 
                         </th>
                       );
                     })}
+                    {hasRowActions && <th style={{ textAlign: 'right' }}>Actions</th>}
                   </tr>
                 </thead>
                 <tbody>
                   {pageItems.length === 0 ? (
                     <tr>
-                      <td colSpan={columns.length} className="muted">
+                      <td colSpan={totalCols} className="muted">
                         {query ? 'No records match your search.' : emptyLabel}
                       </td>
                     </tr>
@@ -195,6 +256,19 @@ export function EntityListPage({ title, subtitle, endpoint, columns, emptyLabel 
                         {columns.map((c) => (
                           <td key={c.key}>{renderCell(row, c)}</td>
                         ))}
+                        {hasRowActions && (
+                          <td>
+                            <div className="table-actions" style={{ justifyContent: 'flex-end' }}>
+                              {rowActions && rowActions(row, { reload: load })}
+                              {canUpdate && (
+                                <button type="button" className="btn btn--ghost btn--sm" onClick={() => setEditing({ mode: 'edit', row })}>Edit</button>
+                              )}
+                              {canDelete && (
+                                <button type="button" className="btn btn--ghost btn--sm" style={{ color: 'var(--danger)' }} onClick={() => removeRow(row)}>Delete</button>
+                              )}
+                            </div>
+                          </td>
+                        )}
                       </tr>
                     ))
                   )}
@@ -219,6 +293,16 @@ export function EntityListPage({ title, subtitle, endpoint, columns, emptyLabel 
             </div>
           )}
         </>
+      )}
+
+      {editing && (
+        <EntityForm
+          title={editing.mode === 'edit' ? `Edit ${noun}` : `New ${noun}`}
+          fields={fields}
+          row={editing.mode === 'edit' ? editing.row : null}
+          onClose={() => setEditing(null)}
+          onSubmit={submitForm}
+        />
       )}
     </div>
   );

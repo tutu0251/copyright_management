@@ -11,12 +11,14 @@ const usersRoutes = require('./users.js');
 const rolesRoutes = require('./roles.js');
 const activitiesRoutes = require('./activities.js');
 const reportsRoutes = require('./reports.js');
+const { assetsRouter } = require('./assets.js');
 
 const router = Router();
 
 router.use('/auth', authRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/works', worksRoutes);
+router.use('/assets', assetsRouter);
 router.use('/owners', ownersRoutes);
 router.use('/licensees', licenseesRoutes);
 router.use('/licenses', licensesRoutes);

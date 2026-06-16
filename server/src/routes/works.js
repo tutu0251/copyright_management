@@ -1,8 +1,10 @@
 const { Router } = require('express');
 const { Work } = require('../models/Work.js');
 const { License } = require('../models/License.js');
+const { Asset } = require('../models/Asset.js');
 const { createCrudRoutes } = require('./crudFactory.js');
 const { requireAuth, requirePermission } = require('../middleware/auth.js');
+const { listWorkAssets, uploadWorkAsset } = require('./assets.js');
 
 const crud = createCrudRoutes({
   Model: Work,
@@ -27,7 +29,24 @@ const crud = createCrudRoutes({
     registration_date: d.registeredAt ? new Date(d.registeredAt).toISOString().slice(0, 10) : '',
     last_updated: d.updatedAt,
     license_count: 0,
+    asset_count: d.asset_count || 0,
+    asset_size: d.asset_size || 0,
   }),
+  // Attach per-work asset count + total bytes in one aggregate (avoids N+1).
+  decorateList: async (items) => {
+    if (!items.length) return;
+    const ids = items.map((i) => i._id);
+    const rows = await Asset.aggregate([
+      { $match: { work: { $in: ids }, deletedAt: null } },
+      { $group: { _id: '$work', count: { $sum: 1 }, size: { $sum: '$size' } } },
+    ]);
+    const byWork = new Map(rows.map((r) => [String(r._id), r]));
+    for (const it of items) {
+      const s = byWork.get(String(it._id));
+      it.asset_count = s ? s.count : 0;
+      it.asset_size = s ? s.size : 0;
+    }
+  },
   beforeCreate: (body, req) => ({
     title: body.title,
     workType: body.workType || body.work_type || 'Text',
@@ -47,5 +66,10 @@ router.get('/meta/types', requireAuth, requirePermission('works.view'), async (_
   const types = await Work.distinct('workType', { deletedAt: null });
   res.json({ types: types.filter(Boolean) });
 });
+
+// Asset (file) management for a work: list + upload. Download/preview and delete
+// of an individual asset live at /api/assets/:id (see routes/assets.js).
+router.get('/:id/assets', requireAuth, requirePermission('works.view'), listWorkAssets);
+router.post('/:id/assets', requireAuth, requirePermission('works.update'), uploadWorkAsset);
 
 module.exports = router;

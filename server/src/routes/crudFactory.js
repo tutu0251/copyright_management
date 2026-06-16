@@ -10,6 +10,9 @@ function createCrudRoutes({
   listFilter = { deletedAt: null },
   formatDoc = (d) => d,
   beforeCreate,
+  // Optional batch enrichment: receives the raw (lean) list before formatting so
+  // extra fields (e.g. asset counts) can be attached in a single query.
+  decorateList,
 }) {
   const router = Router();
   router.use(requireAuth);
@@ -22,6 +25,7 @@ function createCrudRoutes({
   router.get('/', requirePermission(viewPerm), async (req, res) => {
     const q = { ...listFilter };
     const items = await Model.find(q).sort({ updatedAt: -1 }).limit(500).lean();
+    if (decorateList) await decorateList(items, req);
     res.json({ items: await Promise.all(items.map(fmt)) });
   });
 
